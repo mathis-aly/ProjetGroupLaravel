@@ -4,9 +4,15 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
+        @fonts
         <title>{{ config('app.name', 'UberBite(Coin)') }}</title>
-    </head>
-    <body>
 
+        @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+            @vite(['resources/css/app.css'])
+        @endif
+        
+    </head>
+    <body class="bg-black">
+        test
     </body>
 </html>
