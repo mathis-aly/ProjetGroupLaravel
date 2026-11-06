@@ -54,6 +54,11 @@ Route::get('/annonces', function () use ($articles) {
     return view('annonces', compact('articles'));
 });
 
+Route::get('/annonce/{id}', function ($id) use ($articles) {
+    $article = collect($articles)->first(fn ($a) => $a['id'] == $id);
+    return view('detailArticle', compact('article'));
+})->name('annonce');
+
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
