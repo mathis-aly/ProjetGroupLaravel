@@ -23,7 +23,8 @@
             </a>
 
             <nav class="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end sm:gap-6" aria-label="Navigation principale">
-                <a class="text-sm font-semibold text-white/80 transition hover:text-amber-400" href="{{ url('/') }}">Accueil</a>
+                <a class="text-sm font-semibold text-white/80 transition hover:text-amber-400" href="{{ url('/accueil') }}">Accueil</a>
+                <a class="text-sm font-semibold text-white/80 transition hover:text-amber-400" href="{{ url('/annonces') }}">Annonces</a>
                 <div class="flex items-center gap-2">
                     @auth
                         <a class="rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-bold text-teal-950 transition hover:bg-amber-300" href="{{ route('dashboard') }}">Mon compte</a>
