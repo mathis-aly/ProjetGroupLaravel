@@ -58,15 +58,13 @@
 
             <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 @foreach ($articles as $article)
-                    <div class="transform transition duration-300 ease-out hover:-translate-y-1 motion-reduce:transition-none">
-                        <x-article
-                            :id="$article['id']"
-                            :title="$article['title']"
-                            :description="$article['description']"
-                            :condition="$article->condition->Label()"
-                            :price="$article['price']"
-                        />
-                    </div>
+                    <x-article
+                        :slug="$article['slug']"
+                        :title="$article['title']"
+                        :description="$article['description']"
+                        :condition="$article->condition->Label()"
+                        :price="$article['price']"
+                    />
                 @endforeach
             </div>
 

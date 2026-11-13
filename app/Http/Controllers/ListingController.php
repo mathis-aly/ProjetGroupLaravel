@@ -68,9 +68,9 @@ class ListingController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $slug)
     {
-        $listing = Listing::with(['category', 'user'])->findOrFail($id);
+        $listing = Listing::with(['category', 'user'])->where('slug', $slug)->firstOrFail();
         return view('detailArticle', ['article' => $listing]);
     }
 
