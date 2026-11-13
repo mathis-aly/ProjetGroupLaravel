@@ -1,8 +1,8 @@
-@props(['id', 'title', 'description','condition'])
-<a href="{{ route('annonce', ['listing' => $id]) }}">
+@props(['slug', 'title', 'description','condition'])
+<a href="{{ route('annonce', ['listing' => $slug]) }}">
 <article class="rounded-2xl border border-teal-900/10 bg-white p-6 shadow-lg shadow-teal-900/5">
     <p  class="mb-3 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-teal-900">
-        Article #{{ $id }}
+        Article #{{ $slug }}
     </p>
 
     <h2 class="text-2xl font-extrabold tracking-tight text-teal-900">

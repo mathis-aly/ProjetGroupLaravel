@@ -21,7 +21,7 @@
             <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 @foreach ($articles as $article)
                     <x-article
-                        :id="$article['id']"
+                        :slug="$article['slug']"
                         :title="$article['title']"
                         :description="$article['description']"
                         :condition="$article->condition->Label()"

@@ -10,7 +10,7 @@ Route::get('/accueil', [ListingController::class, 'accueil'])->name('accueil');
 
 Route::get('/annonces', [ListingController::class, 'annonces'])->name('annonces');
 
-Route::get('/annonce/{listing}', [ListingController::class, 'show'])->name('annonce');
+Route::get('/annonce/{listing:slug}', [ListingController::class, 'show'])->name('annonce');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
