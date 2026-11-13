@@ -24,6 +24,7 @@
                         :id="$article['id']"
                         :title="$article['title']"
                         :description="$article['description']"
+                        :condition="$article->condition->Label()"
                     />
                 @endforeach
             </div>
