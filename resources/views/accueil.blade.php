@@ -25,11 +25,12 @@
             </div>
 
             <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                @foreach (array_slice($articles, 0, 3) as $article)
+                @foreach ($articles as $article)
                     <x-article
                         :id="$article['id']"
                         :title="$article['title']"
                         :description="$article['description']"
+                        :condition="$article->condition->Label()"
                     />
                 @endforeach
             </div>
