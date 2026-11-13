@@ -5,25 +5,49 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Listing;
 use Illuminate\View\View;
+use App\Models\Category;
+use Illuminate\Database\Eloquent\Builder;
 
 class ListingController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function annonces(): View
-    {
-        $articles = Listing::with(['category', 'user'])->latest()->paginate(12);
 
-        return view('annonces', compact('articles'));
+    public function accueil(Request $request): View
+    {
+        $articles = $this->filteredListings($request)
+            ->latest()
+            ->paginate(6)
+            ->withQueryString();
+
+        $categories = Category::orderBy('name')->get();
+
+        return view('accueil', compact('articles', 'categories'));
     }
 
-     public function accueil(): View
+    public function annonces(Request $request): View
     {
-        $articles = Listing::with(['category', 'user'])->latest()->paginate(6);
+        $articles = $this->filteredListings($request)
+            ->latest()
+            ->paginate(12)
+            ->withQueryString();
 
-        return view('accueil', compact('articles'));
+        $categories = Category::orderBy('name')->get();
+
+        return view('annonces', compact('articles', 'categories'));
     }
+
+    private function filteredListings(Request $request): Builder
+    {
+        return Listing::query()
+            ->available()
+            ->with(['category', 'user'])
+            ->when($request->filled('q'), fn ($query) =>
+                $query->where('title', 'like', '%' . $request->input('q') . '%'))
+            ->when($request->filled('category'), fn ($query) =>
+                $query->whereRelation('category', 'slug', $request->input('category')))
+            ->when($request->filled('max_price'), fn ($query) =>
+                $query->where('price', '<=', $request->input('max_price')));
+    }
+
 
     /**
      * Show the form for creating a new resource.
