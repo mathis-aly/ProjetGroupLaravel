@@ -1,4 +1,4 @@
-@props(['slug', 'title', 'description','condition'])
+@props(['slug', 'title', 'description','condition', 'price'])
 <a href="{{ route('annonce', ['listing' => $slug]) }}">
 <article class="flex h-[22rem] flex-col overflow-hidden rounded-2xl border border-teal-900/10 bg-white p-6 shadow-lg shadow-teal-900/5">
     <p  class="mb-3 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-teal-900">
