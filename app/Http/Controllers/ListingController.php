@@ -11,11 +11,18 @@ class ListingController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): View
+    public function annonces(): View
     {
         $articles = Listing::with(['category', 'user'])->latest()->paginate(12);
 
         return view('annonces', compact('articles'));
+    }
+
+     public function accueil(): View
+    {
+        $articles = Listing::with(['category', 'user'])->latest()->paginate(6);
+
+        return view('accueil', compact('articles'));
     }
 
     /**
