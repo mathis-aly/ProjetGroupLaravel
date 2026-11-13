@@ -64,6 +64,7 @@
                         :description="$article['description']"
                         :condition="$article->condition->Label()"
                         :price="$article['price']"
+                        :author="$article->user?->name ?? 'Inconnu'"
                     />
                 @endforeach
             </div>
