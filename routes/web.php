@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ListingController;
+
 
 $articles = [
     [
@@ -50,14 +52,9 @@ Route::get('/accueil', function () use ($articles) {
     return view('accueil', compact('articles'));
 });
 
-Route::get('/annonces', function () use ($articles) {
-    return view('annonces', compact('articles'));
-});
+Route::get('/annonces', [ListingController::class, 'index'])->name('annonces.index');
 
-Route::get('/annonce/{id}', function ($id) use ($articles) {
-    $article = collect($articles)->first(fn ($a) => $a['id'] == $id);
-    return view('detailArticle', compact('article'));
-})->name('annonce');
+Route::get('/annonce/{listing}', [ListingController::class, 'show'])->name('annonce');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
