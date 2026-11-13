@@ -24,6 +24,44 @@
                 </h2>
             </div>
 
+            <form method="GET" action="{{ url()->current() }}" class="mb-10 grid gap-3 rounded-2xl border border-teal-900/10 bg-white/85 p-4 shadow-lg shadow-teal-900/5 transition-shadow duration-300 focus-within:border-amber-400 focus-within:shadow-md sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_0.8fr_auto] sm:p-5">
+                <div class="min-w-0">
+                    <label for="listing-search" class="mb-1.5 block text-xs font-bold uppercase text-teal-800">Recherche</label>
+                    <input id="listing-search" type="search" name="q" value="{{ request('q') }}" placeholder="Nom de l’article" class="w-full rounded-xl border-teal-900/15 bg-white text-sm text-teal-950 placeholder:text-teal-900/40 focus:border-teal-700 focus:ring-amber-400">
+                </div>
+
+                <div class="min-w-0">
+                    <label for="listing-category" class="mb-1.5 block text-xs font-bold uppercase text-teal-800">Catégorie</label>
+                    <select id="listing-category" name="category" class="w-full rounded-xl border-teal-900/15 bg-white text-sm text-teal-950 focus:border-teal-700 focus:ring-amber-400">
+                        <option value="">Toutes les catégories</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->slug }}" @selected(request('category') === $category->slug)>
+                                {{ $category->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="min-w-0">
+                    <label for="listing-max-price" class="mb-1.5 block text-xs font-bold uppercase text-teal-800">Prix maximum</label>
+                    <div class="relative">
+                        <input id="listing-max-price" type="number" name="max_price" min="0" step="0.01" value="{{ request('max_price') }}" placeholder="Sans limite" class="w-full rounded-xl border-teal-900/15 bg-white pr-9 text-sm text-teal-950 placeholder:text-teal-900/40 focus:border-teal-700 focus:ring-amber-400">
+                        <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-teal-900/50">€</span>
+                    </div>
+                </div>
+
+                <div class="flex items-end gap-2">
+                    <button type="submit" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-teal-900 px-5 text-sm font-bold text-white transition duration-200 hover:bg-teal-800 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 motion-reduce:transition-none">
+                        Filtrer
+                    </button>
+                    @if (request()->hasAny(['q', 'category', 'max_price']))
+                        <a href="{{ url()->current() }}" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-teal-900/15 px-4 text-sm font-semibold text-teal-800 transition-colors hover:border-amber-500 hover:bg-amber-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500">
+                            Effacer
+                        </a>
+                    @endif
+                </div>
+            </form>
+
             <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 @foreach ($articles as $article)
                     <x-article
@@ -31,6 +69,7 @@
                         :title="$article['title']"
                         :description="$article['description']"
                         :condition="$article->condition->Label()"
+                        :price="$article['price']"
                     />
                 @endforeach
             </div>
