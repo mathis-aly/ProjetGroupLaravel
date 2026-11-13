@@ -31,6 +31,7 @@
                         :title="$article['title']"
                         :description="$article['description']"
                         :condition="$article->condition->Label()"
+                        :price="$article['price']"
                     />
                 @endforeach
             </div>

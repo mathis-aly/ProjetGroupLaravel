@@ -18,6 +18,10 @@
                     {{ $article['title'] }}
                 </h1>
 
+                <p class="mt-5 text-2xl font-bold text-amber-400">
+                    {{ number_format((float) $article['price'], 2, ',', ' ') }} €
+                </p>
+
                 <div class="mt-8 h-1 w-14 rounded-full bg-amber-400" aria-hidden="true"></div>
                 <p class="mt-6 text-sm font-semibold text-amber-100/70">Le goût du quartier.</p>
             </div>
