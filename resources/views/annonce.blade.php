@@ -6,12 +6,9 @@
 
         <title>{{ config('app.name', 'UberBite(Coin)') }}</title>
     </head>
-    
     <body>
         <x-card title="annonce" > 
-            <p>liste des annonces</p>
-            <xlisting-card :listing="$listing" class="mt-4" />
-        </x-card>
-
+            <p>Contenu de l'annonce</p>
+        </x-card>   
     </body>
 </html>
