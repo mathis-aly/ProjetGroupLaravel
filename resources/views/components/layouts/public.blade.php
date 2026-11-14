@@ -28,6 +28,7 @@
                 <div class="flex items-center gap-2">
                     @auth
                         <a class="rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-bold text-teal-950 transition hover:bg-amber-300" href="{{ route('dashboard') }}">Mon compte</a>
+                        <a class="rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:border-amber-400 hover:text-amber-400" href="{{ route('listings.create') }}">Déposer une annonce</a>
                     @else
                         <a class="rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:border-amber-400 hover:text-amber-400" href="{{ route('login') }}">Connexion</a>
                         <a class="rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-bold text-teal-950 transition hover:bg-amber-300" href="{{ route('register') }}">Inscription</a>
@@ -38,6 +39,20 @@
     </header>
 
     <main class="flex-1">
+        {{-- Contrôleur : return redirect()->route('listings.index')->with('success', 'Annonce supprimée.'); --}}
+
+        {{-- resources/views/components/layouts/public.blade.php (extrait) --}}
+        @if (session('success'))
+        <div class="bg-green-100 text-green-800 px-4 py-3 rounded mb-4">
+        {{ session('success') }}
+        </div>
+        @endif
+
+        @if (session('error'))
+        <div class="bg-red-100 text-red-800 px-4 py-3 rounded mb-4">
+        {{ session('error') }}
+        </div>
+        @endif
         {{ $slot }}
     </main>
 

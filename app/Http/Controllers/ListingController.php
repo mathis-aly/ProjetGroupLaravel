@@ -7,6 +7,10 @@ use App\Models\Listing;
 use Illuminate\View\View;
 use App\Models\Category;
 use Illuminate\Database\Eloquent\Builder;
+use App\Enums\ListingCondition;
+use Illuminate\Support\Str;
+use Illuminate\Http\RedirectResponse;
+use App\Http\Requests\StoreListingRequest;
 
 class ListingController extends Controller
 {
@@ -23,6 +27,15 @@ class ListingController extends Controller
         return view('accueil', compact('articles', 'categories'));
     }
 
+    public function create(): View
+    {
+    return view('listings.create', [
+        'categories' => Category::orderBy('name')->get(),
+        'conditions' => ListingCondition::cases(),
+    ]);
+    }
+
+   
     public function annonces(Request $request): View
     {
         $articles = $this->filteredListings($request)
@@ -52,17 +65,20 @@ class ListingController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-        //
-    }
+  
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreListingRequest $request): RedirectResponse
     {
-        //
+        $listing = $request->user()->listings()->create([
+            ...$request->validated(),
+            'slug' => Str::slug($request->validated('title')) . '-' . Str::lower(Str::random(6)),
+        ]);
+
+        return redirect()->route('annonce', $listing)
+            ->with('success', 'Annonce publiée !');
     }
 
     /**
