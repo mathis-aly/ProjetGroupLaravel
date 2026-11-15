@@ -12,15 +12,6 @@ Route::get('/annonces', [ListingController::class, 'annonces'])->name('annonces'
 
 Route::get('/annonce/{listing:slug}', [ListingController::class, 'show'])->name('annonce');
 
-Route::get('/annonces/creer', [ListingController::class, 'create'])->name('listings.create');
-
-Route::get('/annonces/supprimer', [ListingController::class, 'delete'])->name('listings.delete');
-
-Route::get('/mes-annonces/{user_name}', [ListingController::class, 'mesAnnonces'])->name('mesAnnonces');
-
-Route::get('/annonce/{listing:slug}/modifier', [ListingController::class, 'edit'])->name('listings.edit');
-Route::put('/annonce/{listing:slug}', [ListingController::class, 'update'])->name('listings.update');
-
 
 
 Route::get('/dashboard', function () {
@@ -35,6 +26,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/annonces/creer', [ListingController::class, 'create'])->name('listings.create');
     Route::post('/annonces', [ListingController::class, 'store'])->name('listings.store');
+    Route::get('/annonce/{listing:slug}/modifier', [ListingController::class, 'edit'])->name('listings.edit');
+    Route::put('/annonce/{listing:slug}', [ListingController::class, 'update'])->name('listings.update');
+    Route::delete('/annonce/{listing:slug}', [ListingController::class, 'destroy'])->name('listings.destroy');
+    Route::get('/mes-annonces/{user_name}', [ListingController::class, 'mesAnnonces'])->name('mesAnnonces');
 });
 
 require __DIR__.'/auth.php';

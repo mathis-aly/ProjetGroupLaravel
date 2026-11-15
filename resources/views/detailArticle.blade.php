@@ -7,12 +7,20 @@
                 </svg>
                 Toutes les annonces
             </a>
-
-            @if (auth()->check() && auth()->id() === $article->user_id)
-                <a href="{{ route('listings.edit', ['listing' => $article->slug]) }}" class="inline-flex items-center justify-center rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-bold text-teal-950 shadow-sm transition hover:bg-amber-300">
-                    Modifier
-                </a>
-            @endif
+            <div>
+                @if (auth()->check() && auth()->id() === $article->user_id)
+                    <form action="{{ route('listings.destroy', ['listing' => $article->slug]) }}" method="POST" class="inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-red-700">
+                            Supprimer
+                        </button>
+                    </form>
+                    <a href="{{ route('listings.edit', ['listing' => $article->slug]) }}" class="inline-flex items-center justify-center rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-bold text-teal-950 shadow-sm transition hover:bg-amber-300">
+                        Modifier
+                    </a>
+                @endif
+            </div>
         </div>
 
         <article class="grid flex-1 overflow-hidden rounded-3xl bg-white shadow-xl shadow-teal-950/10 md:grid-cols-[1.1fr_.9fr]">

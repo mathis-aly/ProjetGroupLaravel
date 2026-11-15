@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Enums\ListingCondition;
 use Illuminate\Support\Str;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\Rule;
 use App\Http\Requests\StoreListingRequest;
 
 class ListingController extends Controller
@@ -19,10 +20,6 @@ class ListingController extends Controller
     public function mesAnnonces(Request $request, string $user_name): View
     {
         $user = auth()->user();
-
-        if (! $user) {
-            abort(401);
-        }
 
         if ($user->name !== $user_name) {
             abort(403);
@@ -84,9 +81,9 @@ class ListingController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'category_id' => ['required', 'exists:categories,id'],
-            'condition' => ['required'],
+            'condition' => ['required', Rule::in(array_column(ListingCondition::cases(), 'value'))],
             'price' => ['required', 'numeric', 'min:0'],
-            'city' => ['nullable', 'string', 'max:255'],
+            'city' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
         ]);
 
@@ -157,8 +154,17 @@ class ListingController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $slug): RedirectResponse
     {
-        //
+        $listing = Listing::where('slug', $slug)->firstOrFail();
+
+        if (auth()->id() !== $listing->user_id) {
+            abort(403);
+        }
+
+        $listing->delete();
+
+        return redirect()->route('annonces')
+            ->with('success', 'Annonce supprimée !');
     }
 }
