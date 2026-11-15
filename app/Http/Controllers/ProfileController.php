@@ -34,6 +34,10 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
+        if (str_contains((string) $request->headers->get('referer'), '/dashboard')) {
+            return Redirect::route('dashboard')->with('status', 'profile-updated');
+        }
+
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
