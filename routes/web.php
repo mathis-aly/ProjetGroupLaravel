@@ -14,9 +14,12 @@ Route::get('/annonce/{listing:slug}', [ListingController::class, 'show'])->name(
 
 Route::get('/annonces/creer', [ListingController::class, 'create'])->name('listings.create');
 
+Route::get('/annonces/supprimer', [ListingController::class, 'delete'])->name('listings.delete');
+
 Route::get('/mes-annonces/{user_name}', [ListingController::class, 'mesAnnonces'])->name('mesAnnonces');
 
-Route::get('/annonce/modifier/{listing:slug}', [ListingController::class, 'edit'])->name('listing.edit');
+Route::get('/annonce/{listing:slug}/modifier', [ListingController::class, 'edit'])->name('listings.edit');
+Route::put('/annonce/{listing:slug}', [ListingController::class, 'update'])->name('listings.update');
 
 
 

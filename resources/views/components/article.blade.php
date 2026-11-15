@@ -32,7 +32,7 @@
     </a>
 
     @if ($canEdit)
-        <a href="{{ route('listing.edit', ['listing' => $slug]) }}" class="inline-flex items-center justify-center rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-bold text-teal-950 shadow-sm transition hover:bg-amber-300">
+        <a href="{{ route('listings.edit', ['listing' => $slug]) }}" class="inline-flex items-center justify-center rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-bold text-teal-950 shadow-sm transition hover:bg-amber-300">
             Modifier
         </a>
     @endif

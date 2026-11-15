@@ -1,4 +1,4 @@
-{{-- resources/views/listings/edit.blade.php --}}
+{{-- resources/views/listings/update.blade.php --}}
 <x-layouts.public title="Modifier une annonce">
 
     <div class="mx-auto w-full max-w-2xl px-6 py-10">
@@ -7,7 +7,7 @@
             <p class="mt-1 text-sm text-teal-800/80">Mettez à jour les informations de votre annonce.</p>
         </div>
 
-        <form method="POST" action="{{ route('listing.edit', $listing->slug) }}" class="space-y-6 rounded-2xl border border-teal-900/10 bg-white/80 p-6 shadow-lg shadow-teal-900/5 sm:p-8">
+        <form method="POST" action="{{ route('listings.update', $listing->slug) }}" class="space-y-6 rounded-2xl border border-teal-900/10 bg-white/80 p-6 shadow-lg shadow-teal-900/5 sm:p-8">
             @csrf
             @method('PUT')
 

@@ -57,6 +57,7 @@ class ListingController extends Controller
     ]);
     }
 
+
     public function edit(string $slug): View
     {
         $listing = Listing::where('slug', $slug)->firstOrFail();
@@ -64,11 +65,35 @@ class ListingController extends Controller
         if (auth()->id() !== $listing->user_id) {
             abort(403);
         }
-    return view('listings.edit', [
-        'categories' => Category::orderBy('name')->get(),
-        'conditions' => ListingCondition::cases(),
-        'listing' => $listing,
-    ]);
+
+        return view('listings.update', [
+            'listing' => $listing,
+            'categories' => Category::orderBy('name')->get(),
+            'conditions' => ListingCondition::cases(),
+        ]);
+    }
+
+    public function update(Request $request, string $slug): RedirectResponse
+    {
+        $listing = Listing::where('slug', $slug)->firstOrFail();
+
+        if (auth()->id() !== $listing->user_id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'category_id' => ['required', 'exists:categories,id'],
+            'condition' => ['required'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'city' => ['nullable', 'string', 'max:255'],
+            'description' => ['required', 'string'],
+        ]);
+
+        $listing->update($validated);
+
+        return redirect()->route('annonce', $listing)
+            ->with('success', 'Annonce mise à jour !');
     }
 
    
@@ -128,13 +153,6 @@ class ListingController extends Controller
     }
 
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
 
     /**
      * Remove the specified resource from storage.
