@@ -14,6 +14,8 @@ Route::get('/annonce/{listing:slug}', [ListingController::class, 'show'])->name(
 
 Route::get('/annonces/creer', [ListingController::class, 'create'])->name('listings.create');
 
+Route::get('/mesAnnonces/{user_name}', [ListingController::class, 'mesAnnonces'])->name('mesAnnonces');
+
 
 
 Route::get('/dashboard', function () {

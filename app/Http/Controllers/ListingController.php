@@ -15,6 +15,19 @@ use App\Http\Requests\StoreListingRequest;
 class ListingController extends Controller
 {
 
+
+    public function mesAnnonces(Request $request): View
+    {
+        $articles = $this->filteredListings($request)
+            ->latest()
+            ->paginate(12)
+            ->where('user_id', auth()->id());
+
+        $categories = Category::orderBy('name')->get();
+
+        return view('mesAnnonces', compact('articles', 'categories'));
+    }
+
     public function accueil(Request $request): View
     {
         $articles = $this->filteredListings($request)
