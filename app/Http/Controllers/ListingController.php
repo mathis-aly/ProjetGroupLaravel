@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Enums\ListingCondition;
 use Illuminate\Support\Str;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\Rule;
 use App\Http\Requests\StoreListingRequest;
 
 class ListingController extends Controller
@@ -19,10 +20,6 @@ class ListingController extends Controller
     public function mesAnnonces(Request $request, string $user_name): View
     {
         $user = auth()->user();
-
-        if (! $user) {
-            abort(401);
-        }
 
         if ($user->name !== $user_name) {
             abort(403);
@@ -57,7 +54,47 @@ class ListingController extends Controller
     ]);
     }
 
+
+    public function edit(string $slug): View
+    {
+        $listing = Listing::where('slug', $slug)->firstOrFail();
+
+        if (auth()->id() !== $listing->user_id) {
+            abort(403);
+        }
+
+        return view('listings.update', [
+            'listing' => $listing,
+            'categories' => Category::orderBy('name')->get(),
+            'conditions' => ListingCondition::cases(),
+        ]);
+    }
+
+    public function update(Request $request, string $slug): RedirectResponse
+    {
+        $listing = Listing::where('slug', $slug)->firstOrFail();
+
+        if (auth()->id() !== $listing->user_id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'category_id' => ['required', 'exists:categories,id'],
+            'condition' => ['required', Rule::in(array_column(ListingCondition::cases(), 'value'))],
+            'price' => ['required', 'numeric', 'min:0'],
+            'city' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string'],
+        ]);
+
+        $listing->update($validated);
+
+        return redirect()->route('annonce', $listing)
+            ->with('success', 'Annonce mise à jour !');
+    }
+
    
+
     public function annonces(Request $request): View
     {
         $articles = $this->filteredListings($request)
@@ -112,27 +149,22 @@ class ListingController extends Controller
         return view('detailArticle', ['article' => $listing]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $slug): RedirectResponse
     {
-        //
+        $listing = Listing::where('slug', $slug)->firstOrFail();
+
+        if (auth()->id() !== $listing->user_id) {
+            abort(403);
+        }
+
+        $listing->delete();
+
+        return redirect()->route('annonces')
+            ->with('success', 'Annonce supprimée !');
     }
 }

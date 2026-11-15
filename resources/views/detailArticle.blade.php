@@ -1,11 +1,27 @@
 <x-layouts.public :title="$article['title'] . ' | UberBite(Coin)'">
     <section class="mx-auto flex min-h-[calc(100vh-10rem)] w-full max-w-7xl flex-col px-5 py-8 sm:px-8 sm:py-12" aria-labelledby="article-title">
-        <a href="{{ url('/annonces') }}" class="group mb-8 inline-flex w-fit items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-teal-900/70 transition hover:bg-teal-900/5 hover:text-teal-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-900">
-            <svg class="h-4 w-4 transition group-hover:-translate-x-1" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M16 10H4m0 0 5-5m-5 5 5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Toutes les annonces
-        </a>
+        <div class="mb-8 flex items-center justify-between gap-3">
+            <a href="{{ url('/annonces') }}" class="group inline-flex w-fit items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-teal-900/70 transition hover:bg-teal-900/5 hover:text-teal-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-900">
+                <svg class="h-4 w-4 transition group-hover:-translate-x-1" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path d="M16 10H4m0 0 5-5m-5 5 5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Toutes les annonces
+            </a>
+            <div>
+                @if (auth()->check() && auth()->id() === $article->user_id)
+                    <form action="{{ route('listings.destroy', ['listing' => $article->slug]) }}" method="POST" class="inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-red-700">
+                            Supprimer
+                        </button>
+                    </form>
+                    <a href="{{ route('listings.edit', ['listing' => $article->slug]) }}" class="inline-flex items-center justify-center rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-bold text-teal-950 shadow-sm transition hover:bg-amber-300">
+                        Modifier
+                    </a>
+                @endif
+            </div>
+        </div>
 
         <article class="grid flex-1 overflow-hidden rounded-3xl bg-white shadow-xl shadow-teal-950/10 md:grid-cols-[1.1fr_.9fr]">
             <div class="flex flex-col justify-center bg-teal-900 px-7 py-12 text-white sm:px-12 sm:py-16 lg:px-16">
