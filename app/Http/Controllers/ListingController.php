@@ -25,7 +25,7 @@ class ListingController extends Controller
 
         $categories = Category::orderBy('name')->get();
 
-        return view('mesAnnonces', compact('articles', 'categories'));
+        return view('mes-annonces', compact('articles', 'categories'));
     }
 
     public function accueil(Request $request): View
