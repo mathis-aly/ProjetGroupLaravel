@@ -16,8 +16,17 @@ class ListingController extends Controller
 {
 
 
-    public function mesAnnonces(Request $request): View
+    public function mesAnnonces(Request $request, string $user_name): View
     {
+        $user = auth()->user();
+
+        if (! $user) {
+            abort(401);
+        }
+
+        if ($user->name !== $user_name) {
+            abort(403);
+        }
         $articles = $this->filteredListings($request)
             ->latest()
             ->paginate(12)
