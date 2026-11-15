@@ -15,7 +15,9 @@ Route::get('/annonce/{listing:slug}', [ListingController::class, 'show'])->name(
 
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    return view('dashboard', [
+        'user' => auth()->user(),
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 
