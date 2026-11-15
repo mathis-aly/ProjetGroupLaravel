@@ -16,6 +16,8 @@ Route::get('/annonces/creer', [ListingController::class, 'create'])->name('listi
 
 Route::get('/mes-annonces/{user_name}', [ListingController::class, 'mesAnnonces'])->name('mesAnnonces');
 
+Route::get('/annonce/modifier/{listing:slug}', [ListingController::class, 'edit'])->name('listing.edit');
+
 
 
 Route::get('/dashboard', function () {

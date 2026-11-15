@@ -34,6 +34,7 @@
                         :condition="$article->condition->Label()"
                         :price="$article['price']"
                         :author="$article->user?->name ?? 'Inconnu'"
+                        :canEdit="(int) auth()->id() === (int) $article->user_id"
                     />
                 @endforeach
             </div>

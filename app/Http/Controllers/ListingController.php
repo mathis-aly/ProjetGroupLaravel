@@ -57,7 +57,22 @@ class ListingController extends Controller
     ]);
     }
 
+    public function edit(string $slug): View
+    {
+        $listing = Listing::where('slug', $slug)->firstOrFail();
+
+        if (auth()->id() !== $listing->user_id) {
+            abort(403);
+        }
+    return view('listings.edit', [
+        'categories' => Category::orderBy('name')->get(),
+        'conditions' => ListingCondition::cases(),
+        'listing' => $listing,
+    ]);
+    }
+
    
+
     public function annonces(Request $request): View
     {
         $articles = $this->filteredListings($request)
@@ -112,13 +127,6 @@ class ListingController extends Controller
         return view('detailArticle', ['article' => $listing]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
