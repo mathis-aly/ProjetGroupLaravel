@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;   
+
 
 class Listing extends Model
 {
@@ -44,5 +46,17 @@ class Listing extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::saved(function (Listing $listing) {
+            Cache::forget('home.latest');
+        });
+        static::deleted(function (Listing $listing) {
+            Cache::forget('home.latest');
+        });
     }
 }

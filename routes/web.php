@@ -1,13 +1,15 @@
 <?php
 
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\ChatController;
 
+
 Route::redirect('/', '/accueil');
 
-Route::get('/accueil', [ListingController::class, 'accueil'])->name('accueil');
+Route::get('/accueil', HomeController::class)->name('accueil');
 
 Route::get('/annonces', [ListingController::class, 'annonces'])->name('annonces');
 
