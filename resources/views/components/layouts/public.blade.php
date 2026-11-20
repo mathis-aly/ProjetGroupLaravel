@@ -30,7 +30,7 @@
                 @endauth
                 <div class="flex items-center gap-2">
                     @auth
-                        <a class="rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-bold text-teal-950 transition hover:bg-amber-300" href="{{ route('dashboard') }}">Mon compte</a>
+                        <a class="rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-bold text-teal-950 transition hover:bg-amber-300" href="{{ route('dashboard') }}">{{ auth()->user()->name }}</a>
                         <a class="rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:border-amber-400 hover:text-amber-400" href="{{ route('listings.create') }}">Déposer une annonce</a>
                     @else
                         <a class="rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:border-amber-400 hover:text-amber-400" href="{{ route('login') }}">Connexion</a>

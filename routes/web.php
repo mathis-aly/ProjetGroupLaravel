@@ -4,6 +4,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ListingController;
+use App\Http\Controllers\ChatController;
 
 
 Route::redirect('/', '/accueil');
@@ -33,6 +34,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/annonce/{listing:slug}/modifier', [ListingController::class, 'edit'])->name('listings.edit');
     Route::put('/annonce/{listing:slug}', [ListingController::class, 'update'])->name('listings.update');
     Route::delete('/annonce/{listing:slug}', [ListingController::class, 'destroy'])->name('listings.destroy');
+    Route::post('/annonce/{listing:slug}/messages', [ChatController::class, 'store'])->name('chat.store');
     Route::get('/mes-annonces/{user_name}', [ListingController::class, 'mesAnnonces'])->name('mesAnnonces');
 });
 
