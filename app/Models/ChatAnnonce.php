@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 
 class ChatAnnonce extends Model
@@ -13,9 +13,14 @@ class ChatAnnonce extends Model
 
     protected $fillable = ['user_id', 'listing_id', 'message'];
 
-    public function listing(): HasMany
+    public function listing(): BelongsTo
     {
-        return $this->hasMany(Listing::class);
+        return $this->belongsTo(Listing::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function getRouteKeyName(): string

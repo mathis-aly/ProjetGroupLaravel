@@ -53,5 +53,30 @@
                 </p>
             </div>
         </article>
+        @if(auth()->check() && auth()->id() !== $article->user_id)
+
+            <section class="mt-10" aria-labelledby="article-chat-title">
+                <div class="mb-5">
+                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-700">Échange avec le vendeur</p>
+                    <h2 id="article-chat-title" class="mt-1 text-2xl font-extrabold tracking-tight text-teal-950 sm:text-3xl">
+                        À propos de cette annonce
+                    </h2>
+                </div>
+
+                
+                    
+                    <x-chat
+                        :messages="$chatMessages ?? []"
+                        :contact-name="$article->user?->name ?? 'Vendeur'"
+                        :title="$article['title']"
+                        :price="$article['price']"
+                        :listing="$article"
+                        :open="true"
+                    />
+            
+                
+            </section>
+        @endif
     </section>
+
 </x-layouts.public>

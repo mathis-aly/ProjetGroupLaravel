@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Listing;
+use App\Models\ChatAnnonce;
 use Illuminate\View\View;
 use App\Models\Category;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,6 +25,7 @@ class ListingController extends Controller
         if ($user->name !== $user_name) {
             abort(403);
         }
+        
         $articles = $this->filteredListings($request)
             ->latest()
             ->paginate(12)
@@ -146,7 +148,29 @@ class ListingController extends Controller
     public function show(string $slug)
     {
         $listing = Listing::with(['category', 'user'])->where('slug', $slug)->firstOrFail();
-        return view('detailArticle', ['article' => $listing]);
+        $chatMessages = collect();
+
+        if (auth()->check()) {
+            $messagesQuery = ChatAnnonce::query()
+                ->with('user')
+                ->where('listing_id', $listing->id);
+
+            if (auth()->id() === $listing->user_id) {
+                $messagesQuery->where('user_id', '!=', $listing->user_id);
+            } else {
+                $messagesQuery->where('user_id', auth()->id());
+            }
+
+            $chatMessages = $messagesQuery->oldest()->get();
+            $chatMessages->each(fn (ChatAnnonce $message) =>
+                $message->setAttribute('is_own', $message->user_id === auth()->id())
+            );
+        }
+
+        return view('detailArticle', [
+            'article' => $listing,
+            'chatMessages' => $chatMessages,
+        ]);
     }
 
 
