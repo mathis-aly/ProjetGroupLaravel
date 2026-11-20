@@ -1,7 +1,11 @@
 <?php
 
+use App\Enums\ListingCondition;
+use App\Models\Category;
+use App\Models\Listing;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
-
 
 return [
 
@@ -132,13 +136,12 @@ return [
     |
     */
 
-        'serializable_classes' => [
-        \App\Models\Category::class,
-        \App\Models\Listing::class,
-        \App\Models\User::class,
-        \App\Enums\ListingCondition::class,
-        \Illuminate\Database\Eloquent\Collection::class,
+    'serializable_classes' => [
+        Category::class,
+        Listing::class,
+        User::class,
+        ListingCondition::class,
+        Collection::class,
     ],
-
 
 ];

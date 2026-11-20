@@ -1,7 +1,5 @@
 <?php
 
-
-
 namespace App\Providers;
 
 use App\Models\Category;
@@ -22,15 +20,11 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-
-
     public function boot(): void
     {
-    View::composer('components.layouts.public', function ($view) {
-        $view->with('navCategories', Cache::rememberForever('categories', fn () => 
-            Category::orderBy('name')->get()
-        ));
-    });
-}
-
+        View::composer('components.layouts.public', function ($view) {
+            $view->with('navCategories', Cache::rememberForever('categories', fn () => Category::orderBy('name')->get()
+            ));
+        });
+    }
 }
