@@ -24,6 +24,7 @@ class ListingController extends Controller
         if ($user->name !== $user_name) {
             abort(403);
         }
+        
         $articles = $this->filteredListings($request)
             ->latest()
             ->paginate(12)
