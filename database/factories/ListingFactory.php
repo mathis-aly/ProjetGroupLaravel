@@ -3,7 +3,8 @@
 namespace Database\Factories;
 
 use App\Enums\ListingCondition;
-use App\Models\{Category, User};
+use App\Models\Category;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -17,7 +18,7 @@ class ListingFactory extends Factory
             'user_id' => User::factory(),
             'category_id' => Category::factory(),
             'title' => ucfirst($title),
-            'slug' => Str::slug($title) . '-' . Str::lower(Str::random(6)),
+            'slug' => Str::slug($title).'-'.Str::lower(Str::random(6)),
             'description' => fake('fr_FR')->paragraphs(2, true),
             'price' => fake()->randomFloat(2, 0, 1500),
             'city' => fake('fr_FR')->city(),

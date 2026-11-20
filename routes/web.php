@@ -1,11 +1,10 @@
 <?php
 
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ListingController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ListingController;
-use App\Http\Controllers\ChatController;
-
 
 Route::redirect('/', '/accueil');
 
@@ -15,15 +14,11 @@ Route::get('/annonces', [ListingController::class, 'annonces'])->name('annonces'
 
 Route::get('/annonce/{listing:slug}', [ListingController::class, 'show'])->name('annonce');
 
-
-
 Route::get('/dashboard', function () {
     return view('dashboard', [
         'user' => auth()->user(),
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
-
-
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

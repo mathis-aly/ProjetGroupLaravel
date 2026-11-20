@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\{Category, Listing, User};
+use App\Models\Category;
+use App\Models\Listing;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
