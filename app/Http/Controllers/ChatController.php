@@ -6,6 +6,7 @@ use App\Models\ChatAnnonce;
 use App\Models\Listing;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use App\Events\MessageSent;
 
 class ChatController extends Controller
 {
@@ -40,11 +41,16 @@ class ChatController extends Controller
             'message' => ['required', 'string', 'min:10', 'max:2000'],
         ]);
 
-        ChatAnnonce::create([
+        $message = ChatAnnonce::create([
             'user_id' => $request->user()->id,
             'listing_id' => $listing->id,
             'message' => $validated['message'],
         ]);
+
+        MessageSent::dispatch($message);
+
+        return back()->with('success', 'Votre message a été envoyé au vendeur.');
+
 
         return redirect()
             ->route('annonce', $listing)
