@@ -2,24 +2,28 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\{Category, Listing, User};
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $categories = collect([
+            'Véhicules', 'Immobilier', 'Multimédia', 'Maison',
+            'Mode', 'Loisirs', 'Sport', 'Livres',
+        ])->map(fn ($name) => Category::create([
+            'name' => $name,
+            'slug' => Str::slug($name),
+        ]));
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $me = User::factory()->create(['email' => 'test@example.com']);
+        $users = User::factory(10)->create()->push($me);
+
+        Listing::factory(100)
+            ->recycle($users)
+            ->recycle($categories)
+            ->create();
     }
 }

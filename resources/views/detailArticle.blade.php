@@ -1,0 +1,77 @@
+<x-layouts.public :title="$article['title'] . ' | UberBite(Coin)'">
+    <section class="mx-auto flex min-h-[calc(100vh-10rem)] w-full max-w-7xl flex-col px-5 py-8 sm:px-8 sm:py-12" aria-labelledby="article-title">
+        <div class="mb-8 flex items-center justify-between gap-3">
+            <a href="{{ url('/annonces') }}" class="group inline-flex w-fit items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-teal-900/70 transition hover:bg-teal-900/5 hover:text-teal-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-900">
+                <svg class="h-4 w-4 transition group-hover:-translate-x-1" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path d="M16 10H4m0 0 5-5m-5 5 5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Toutes les annonces
+            </a>
+            <div>
+                @if (auth()->check() && auth()->id() === $article->user_id)
+                    <form action="{{ route('listings.destroy', ['listing' => $article->slug]) }}" method="POST" class="inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-red-700">
+                            Supprimer
+                        </button>
+                    </form>
+                    <a href="{{ route('listings.edit', ['listing' => $article->slug]) }}" class="inline-flex items-center justify-center rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-bold text-teal-950 shadow-sm transition hover:bg-amber-300">
+                        Modifier
+                    </a>
+                @endif
+            </div>
+        </div>
+
+        <article class="grid flex-1 overflow-hidden rounded-3xl bg-white shadow-xl shadow-teal-950/10 md:grid-cols-[1.1fr_.9fr]">
+            <div class="flex flex-col justify-center bg-teal-900 px-7 py-12 text-white sm:px-12 sm:py-16 lg:px-16">
+                <p class="mb-8 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.2em] text-amber-100">
+                    <span class="h-px w-8 bg-amber-400" aria-hidden="true"></span>
+                    Article #{{ $article['id'] }}
+                </p>
+
+                <h1 id="article-title" class="break-words text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+                    {{ $article['title'] }}
+                </h1>
+
+                <p class="mt-5 text-2xl font-bold text-amber-400">
+                    {{ number_format((float) $article['price'], 2, ',', ' ') }} €
+                </p>
+
+                <p class="mt-3 text-sm font-semibold text-amber-100/80">
+                    Auteur : {{ $article->user?->name ?? 'Inconnu' }}
+                </p>
+
+                <div class="mt-8 h-1 w-14 rounded-full bg-amber-400" aria-hidden="true"></div>
+                <p class="mt-6 text-sm font-semibold text-amber-100/70">Le goût du quartier.</p>
+            </div>
+
+            <div class="flex flex-col justify-center px-7 py-12 sm:px-12 sm:py-16 lg:px-16">
+                <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-700">À propos</p>
+                <p class="mt-6 text-lg leading-8 text-teal-950/75 sm:text-xl sm:leading-9">
+                    {{ $article['description'] }}
+                </p>
+            </div>
+        </article>
+        @if (!auth()->check() || auth()->id() !== $article->user_id)
+            <section class="mt-10" aria-labelledby="article-chat-title">
+                <div class="mb-5">
+                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-700">Échange avec le vendeur</p>
+                    <h2 id="article-chat-title" class="mt-1 text-2xl font-extrabold tracking-tight text-teal-950 sm:text-3xl">
+                        À propos de cette annonce
+                    </h2>
+                </div>
+
+                @auth
+                    <x-chat-form :listing="$article" />
+                @else
+                    <p class="rounded-xl border border-teal-900/10 bg-white px-5 py-4 text-sm text-teal-900/75">
+                        <a href="{{ route('login') }}" class="font-bold text-teal-800 underline underline-offset-2">Connectez-vous</a>
+                        pour contacter le vendeur au sujet de cette annonce.
+                    </p>
+                @endauth
+            </section>
+        @endif
+    </section>
+
+</x-layouts.public>

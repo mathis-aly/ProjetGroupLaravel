@@ -1,58 +1,177 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🛒 UberBite(Coin) — Plateforme de Petites Annonces
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Application web de petites annonces locales développée avec **Laravel 13**, **Tailwind CSS** et **Alpine.js**.  
+Les utilisateurs peuvent parcourir les annonces par catégorie, rechercher et filtrer par prix, publier/modifier/supprimer leurs propres annonces et gérer leur espace personnel (« Mon compte », statistiques vendeur et messagerie).
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## ✨ Fonctionnalités principales
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Accueil & Catalogue :** Affichage des 8 dernières annonces mises en cache, liste paginée des annonces avec filtres (recherche par mot-clé, catégorie, prix maximum).
+- **Gestion d'annonces (CRUD) :** Création, modification et suppression d'annonces réservées à leur auteur.
+- **Authentification complète (Laravel Breeze) :** Inscription, connexion, vérification d'e-mail, réinitialisation et modification du mot de passe.
+- **Espace « Mon compte » (Dashboard) :**
+  - Statistiques d'activité vendeur.
+  - Messagerie interactive vendeur ↔ acheteur (Alpine.js).
+  - Gestion des informations personnelles, sécurité du mot de passe et suppression du compte.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 🛠️ Prérequis
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Vous pouvez installer le projet soit **avec Docker (Laravel Sail)**, soit **directement en local** :
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Option A — Avec Docker (recommandé)
+- [Git](https://git-scm.com/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (lancé et actif)
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### Option B — En local (sans Docker)
+- [Git](https://git-scm.com/)
+- **PHP >= 8.3** (avec les extensions `pdo_mysql` ou `pdo_sqlite`, `mbstring`, `xml`, `ctype`, `json`, `bcmath`)
+- [Composer](https://getcomposer.org/) (v2+)
+- [Node.js](https://nodejs.org/) (v18+ ou v20+) & **npm**
+- **MySQL 8+** (ou **SQLite**)
 
-## Agentic Development
+---
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## 🚀 Installation pas à pas depuis GitHub
+
+### 1. Cloner le dépôt GitHub
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/mathis-aly/ProjetGroupLaravel.git
+cd ProjetGroupLaravel
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### 2. Créer le fichier d'environnement `.env`
 
-## Contributing
+```bash
+cp .env.example .env
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## 🐳 Démarrage avec Docker (Laravel Sail) — Recommandé
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Si vous utilisez Docker, `compose.yaml` configure automatiquement **PHP**, **MySQL 8.4** et **Mailpit**.
 
-## Security Vulnerabilities
+### 1. Installer les dépendances PHP via un conteneur temporaire
+*(Si Composer est déjà installé sur votre machine, vous pouvez simplement faire `composer install`)*
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v "$(pwd):/var/www/html" \
+    -w /var/www/html \
+    laravelsail/php84-composer:latest \
+    composer install --ignore-platform-reqs
+```
 
-## License
+### 2. Configurer `.env` pour Sail (MySQL)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Vérifiez que votre fichier `.env` contient bien la configuration MySQL de Sail :
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=sail
+DB_PASSWORD=password
+```
+
+### 3. Démarrer les conteneurs Docker
+
+```bash
+./vendor/bin/sail up -d
+```
+
+### 4. Générer la clé d'application et lancer les migrations + données de test
+
+```bash
+./vendor/bin/sail artisan key:generate
+./vendor/bin/sail artisan migrate --seed
+```
+
+### 5. Installer et compiler les assets Front-End (Tailwind CSS & Alpine.js)
+
+```bash
+./vendor/bin/sail npm install
+./vendor/bin/sail npm run dev
+```
+*(Ou `./vendor/bin/sail npm run build` pour compiler les fichiers de production).*
+
+### 6. Accéder à l'application
+- **Application web :** [http://localhost](http://localhost)
+- **Interface Mailpit (e-mails de test) :** [http://localhost:8025](http://localhost:8025)
+
+---
+
+## 💻 Démarrage en local (sans Docker)
+
+### 1. Installer les dépendances PHP et JavaScript
+
+```bash
+composer install
+npm install
+```
+
+### 2. Générer la clé de chiffrement Laravel
+
+```bash
+php artisan key:generate
+```
+
+### 3. Configurer la base de données dans `.env`
+
+- **Avec SQLite (le plus simple en local, configuration par défaut de `.env.example`) :**
+  ```bash
+  touch database/database.sqlite
+  ```
+- **Ou avec MySQL local :** modifiez `.env` avec vos identifiants locaux (`DB_CONNECTION=mysql`, `DB_HOST=127.0.0.1`, `DB_DATABASE=...`, `DB_USERNAME=...`, `DB_PASSWORD=...`).
+
+### 4. Exécuter les migrations et remplir la base avec les données de démonstration
+
+```bash
+php artisan migrate --seed
+```
+
+### 5. Lancer les serveurs de développement (Laravel + Vite)
+
+Dans un premier terminal :
+```bash
+php artisan serve
+```
+
+Dans un second terminal :
+```bash
+npm run dev
+```
+
+*(Astuce : vous pouvez aussi lancer les deux en même temps avec `composer run dev`)*.
+
+### 6. Accéder à l'application
+- **Application web :** [http://localhost:8000](http://localhost:8000)
+
+---
+
+## 👤 Compte de test généré par le Seeder
+
+Après avoir exécuté `php artisan migrate --seed` (ou `./vendor/bin/sail artisan migrate --seed`), la base de données contient **8 catégories**, **100 annonces** et un compte utilisateur prêt à l'emploi :
+
+| Champ | Valeur |
+| :--- | :--- |
+| **Adresse e-mail** | `test@example.com` |
+| **Mot de passe** | `password` |
+
+---
+
+## 🧰 Commandes utiles au quotidien
+
+| Action | Avec Laravel Sail (Docker) | En local |
+| :--- | :--- | :--- |
+| Démarrer le projet | `./vendor/bin/sail up -d` | `php artisan serve` |
+| Arrêter les conteneurs | `./vendor/bin/sail down` | `Ctrl + C` |
+| Réinitialiser la BDD avec les seeds | `./vendor/bin/sail artisan migrate:fresh --seed` | `php artisan migrate:fresh --seed` |
+| Vider le cache applicatif | `./vendor/bin/sail artisan cache:clear` | `php artisan cache:clear` |
+| Lancer les tests automatisés | `./vendor/bin/sail artisan test` | `php artisan test` |

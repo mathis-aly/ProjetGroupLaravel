@@ -1,6 +1,10 @@
 <?php
 
+
 namespace App\Models;
+
+
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
@@ -22,6 +26,11 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
+
+    public function listings(): HasMany
+    {
+        return $this->hasMany(Listing::class);
+    }
     protected function casts(): array
     {
         return [
@@ -30,3 +39,5 @@ class User extends Authenticatable
         ];
     }
 }
+
+
