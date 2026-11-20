@@ -5,8 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 
-use Illuminate\Database\Eloquent\Builder;
+
 
 class Category extends Model
 {
@@ -22,5 +23,17 @@ class Category extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    public static function boot(): void
+    {
+        parent::boot();
+
+        static::saved(function (Category $category) {
+            Cache::forget('categories');
+        });
+        static::deleted(function (Category $category) {
+            Cache::forget('categories');
+        });
     }
 }

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Str;
 
+
 return [
 
     /*
@@ -131,10 +132,12 @@ return [
     |
     */
 
-    'serializable_classes' => [
-    App\Models\Category::class,
-    App\Models\Listing::class,
-    Illuminate\Database\Eloquent\Collection::class,
+        'serializable_classes' => [
+        \App\Models\Category::class,
+        \App\Models\Listing::class,
+        \App\Models\User::class,
+        \App\Enums\ListingCondition::class,
+        \Illuminate\Database\Eloquent\Collection::class,
     ],
 
 

@@ -12,6 +12,8 @@ use Illuminate\Support\Str;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\Rule;
 use App\Http\Requests\StoreListingRequest;
+use Illuminate\Support\Facades\Cache;
+
 
 class ListingController extends Controller
 {
@@ -24,34 +26,26 @@ class ListingController extends Controller
         if ($user->name !== $user_name) {
             abort(403);
         }
+
         $articles = $this->filteredListings($request)
+            ->where('user_id', auth()->id())
             ->latest()
             ->paginate(12)
-            ->where('user_id', auth()->id());
+            ->withQueryString();
 
-        $categories = Category::orderBy('name')->get();
+        $categories = Cache::rememberForever('categories', fn () =>
+            Category::orderBy('name')->get()
+        );
 
         return view('mes-annonces', compact('articles', 'categories'));
     }
 
-    public function accueil(Request $request): View
-    {
-        $articles = $this->filteredListings($request)
-            ->latest()
-            ->paginate(6)
-            ->withQueryString();
-
-        $categories = Category::orderBy('name')->get();
-
-        return view('accueil', compact('articles', 'categories'));
-    }
-
     public function create(): View
     {
-    return view('listings.create', [
-        'categories' => Category::orderBy('name')->get(),
-        'conditions' => ListingCondition::cases(),
-    ]);
+        return view('listings.create', [
+            'categories' => Cache::rememberForever('categories', fn () => Category::orderBy('name')->get()),
+            'conditions' => ListingCondition::cases(),
+        ]);
     }
 
 
@@ -65,7 +59,7 @@ class ListingController extends Controller
 
         return view('listings.update', [
             'listing' => $listing,
-            'categories' => Category::orderBy('name')->get(),
+            'categories' => Cache::rememberForever('categories', fn () => Category::orderBy('name')->get()),
             'conditions' => ListingCondition::cases(),
         ]);
     }
@@ -102,7 +96,9 @@ class ListingController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        $categories = Category::orderBy('name')->get();
+        $categories = Cache::rememberForever('categories', fn () =>
+            Category::orderBy('name')->get()
+        );
 
         return view('annonces', compact('articles', 'categories'));
     }
@@ -143,7 +139,7 @@ class ListingController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $slug)
+    public function show(string $slug): View
     {
         $listing = Listing::with(['category', 'user'])->where('slug', $slug)->firstOrFail();
         return view('detailArticle', ['article' => $listing]);
@@ -167,4 +163,6 @@ class ListingController extends Controller
         return redirect()->route('annonces')
             ->with('success', 'Annonce supprimée !');
     }
+
+    
 }
