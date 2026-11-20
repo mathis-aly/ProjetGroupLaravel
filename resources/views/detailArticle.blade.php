@@ -53,8 +53,7 @@
                 </p>
             </div>
         </article>
-        @if(auth()->check() && auth()->id() !== $article->user_id)
-
+        @if (!auth()->check() || auth()->id() !== $article->user_id)
             <section class="mt-10" aria-labelledby="article-chat-title">
                 <div class="mb-5">
                     <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-700">Échange avec le vendeur</p>
@@ -63,18 +62,14 @@
                     </h2>
                 </div>
 
-                
-                    
-                    <x-chat
-                        :messages="$chatMessages ?? []"
-                        :contact-name="$article->user?->name ?? 'Vendeur'"
-                        :title="$article['title']"
-                        :price="$article['price']"
-                        :listing="$article"
-                        :open="true"
-                    />
-            
-                
+                @auth
+                    <x-chat-form :listing="$article" />
+                @else
+                    <p class="rounded-xl border border-teal-900/10 bg-white px-5 py-4 text-sm text-teal-900/75">
+                        <a href="{{ route('login') }}" class="font-bold text-teal-800 underline underline-offset-2">Connectez-vous</a>
+                        pour contacter le vendeur au sujet de cette annonce.
+                    </p>
+                @endauth
             </section>
         @endif
     </section>

@@ -34,6 +34,8 @@ class ChatController extends Controller
      */
     public function store(Request $request, Listing $listing): RedirectResponse
     {
+        abort_if((int) $request->user()->id === (int) $listing->user_id, 403);
+
         $validated = $request->validate([
             'message' => ['required', 'string', 'min:10', 'max:2000'],
         ]);
