@@ -10,12 +10,11 @@ class HomeController extends Controller
 {
     public function __invoke(): View
     {
-        $latestListings = Cache::remember('home.latest', 600, fn () =>
-            Listing::available()
-                ->with(['category', 'user'])
-                ->latest()
-                ->take(8)
-                ->get()
+        $latestListings = Cache::remember('home.latest', 600, fn () => Listing::available()
+            ->with(['category', 'user'])
+            ->latest()
+            ->take(8)
+            ->get()
         );
 
         return view('accueil', ['articles' => $latestListings]);

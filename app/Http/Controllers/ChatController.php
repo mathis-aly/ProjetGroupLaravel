@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageSent;
 use App\Models\ChatAnnonce;
 use App\Models\Listing;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
-use App\Events\MessageSent;
+use Illuminate\Http\Request;
 
 class ChatController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function chat(Request $request, string $user_name) //va être renvoyer dans detailArticle.blade.php
+    public function chat(Request $request, string $user_name) // va être renvoyer dans detailArticle.blade.php
     {
         $user = auth()->user();
 
@@ -28,7 +28,6 @@ class ChatController extends Controller
 
         return view('detailArticle', compact('chatMessages'));
     }
-
 
     /**
      * Store a newly created resource in storage.
@@ -50,7 +49,6 @@ class ChatController extends Controller
         MessageSent::dispatch($message);
 
         return back()->with('success', 'Votre message a été envoyé au vendeur.');
-
 
         return redirect()
             ->route('annonce', $listing)

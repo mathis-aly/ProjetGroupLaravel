@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\ListingCondition;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Enums\ListingCondition;
 use Illuminate\Validation\Rules\Enum;
 
 class StoreListingRequest extends FormRequest
@@ -23,15 +23,14 @@ class StoreListingRequest extends FormRequest
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
-{
-    return [
-        'title' => ['required', 'string', 'min:5', 'max:120'],
-        'description' => ['required', 'string', 'max:5000'],
-        'price' => ['required', 'numeric', 'min:0'],
-        'city' => ['required', 'string', 'max:100'],
-        'condition' => ['required', new Enum(ListingCondition::class)],
-        'category_id' => ['required', 'exists:categories,id'],
-    ];
-}
-
+    {
+        return [
+            'title' => ['required', 'string', 'min:5', 'max:120'],
+            'description' => ['required', 'string', 'max:5000'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'city' => ['required', 'string', 'max:100'],
+            'condition' => ['required', new Enum(ListingCondition::class)],
+            'category_id' => ['required', 'exists:categories,id'],
+        ];
+    }
 }
