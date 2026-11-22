@@ -23,6 +23,7 @@ Route::get('/dashboard', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/secret', [ProfileController::class, 'updateSecret'])->name('profile.secret.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/annonces/creer', [ListingController::class, 'create'])->name('listings.create');
     Route::post('/annonces', [ListingController::class, 'store'])->name('listings.store');

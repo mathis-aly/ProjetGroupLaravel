@@ -1,9 +1,22 @@
-@props(['slug', 'title', 'description', 'condition', 'price', 'author', 'canEdit' => false])
+@props([
+    'slug',
+    'title',
+    'description',
+    'condition',
+    'price',
+    'author',
+    'categoryName' => null,
+    'secretRdvType' => null,
+    'secretPhoto' => null,
+    'secretBio' => null,
+    'secretAge' => null,
+    'canEdit' => false,
+])
 @php
     $hash = abs(crc32((string) $slug));
     $indexNumber = sprintf('%02d', ($hash % 98) + 1);
     $affinity = 85 + ($hash % 14);
-    $age = 24 + ($hash % 12);
+    $age = $secretAge ?: (24 + ($hash % 12));
 
     $objectPhotos = [
         'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80',
@@ -36,14 +49,24 @@
     ];
 
     $objectImg = $objectPhotos[$hash % count($objectPhotos)];
-    $portraitImg = $secretPortraits[$hash % count($secretPortraits)];
+    $portraitImg = $secretPhoto ?: $secretPortraits[$hash % count($secretPortraits)];
 
-    $secretIntention = match ($condition) {
-        'Neuf' => 'Souper Clandestin & Première Nuit',
-        'Très bon état' => 'Complicité Suivie & Discrète',
-        'Bon état' => 'Escapade Nocturne',
-        'Pour pièces' => 'Passion Sans Filtre',
-        default => 'Rencontre Confidentielle',
+    // Le Type de RDV remplace la catégorie en mode secret
+    $rdvTypeLabel = $secretRdvType ?: match ($condition) {
+        'Neuf' => 'Souper Clandestin à Huis Clos',
+        'Très bon état' => 'Bar Clandestin & Grands Crus',
+        'Bon état' => 'Virée Nocturne & Évasion',
+        'Pour pièces' => 'Alchimie Intense & Sans Filtre',
+        default => 'Suite Privée & Hôtel Particulier',
+    };
+
+    // Le Créneau Nocturne & Degré d'Intimité remplace le Prix (€) en mode secret
+    $numPrice = (float) $price;
+    $nocturnalSlot = match (true) {
+        $numPrice <= 50  => '21h00 • Premier Verre (Degré I)',
+        $numPrice <= 150 => '22h30 • Souper Feutré (Degré II)',
+        $numPrice <= 400 => '23h45 • Heure de Minuit (Degré III)',
+        default          => '01h15 • Jusqu’à l’Aube (Degré IV)',
     };
 
     $sealKey = 'card-' . $slug;
@@ -59,7 +82,7 @@
             <a href="{{ route('annonce', ['listing' => $slug]) }}" class="group flex h-full flex-col justify-between border border-[#DFDDD4] bg-white p-5 transition duration-500 hover:border-[#111111]">
                 <div>
                     <div class="mb-3 flex items-center justify-between border-b border-[#ECEAE2] pb-2.5 text-[11px]">
-                        <span class="font-mono-tech font-bold text-neutral-500">N° {{ $indexNumber }} / ARCHIVE</span>
+                        <span class="font-mono-tech font-bold text-neutral-500">N° {{ $indexNumber }} {{ $categoryName ? '• ' . strtoupper($categoryName) : '/ ARCHIVE' }}</span>
                         <span class="font-mono-tech uppercase tracking-wider text-neutral-500">{{ $condition }}</span>
                     </div>
 
@@ -102,19 +125,19 @@
         </div>
 
         {{-- ======================================================================= --}}
-        {{-- FACE VERSO (180°) : MAISON VESPER — HAUTE COUTURE NOIR & BRONZE         --}}
+        {{-- FACE VERSO (180°) : MAISON VESPER — TYPE DE RDV & CRÉNEAU NOCTURNE      --}}
         {{-- ======================================================================= --}}
         <div class="card-3d-face card-3d-back">
             <div class="relative flex h-full flex-col justify-between overflow-hidden border border-[#C5A47E]/30 bg-[#0B0B0E] p-5 transition duration-500 hover:border-[#C5A47E]">
 
-                {{-- En-tête Dossier & Score d'affinité --}}
+                {{-- En-tête : Membre, Âge, Type de RDV (remplace la catégorie) & Affinité --}}
                 <div class="flex items-center justify-between gap-2 border-b border-[#C5A47E]/15 pb-3">
                     <div class="min-w-0">
                         <h2 class="font-serif-luxury truncate text-2xl font-normal italic text-[#EAE6DF]">
                             {{ $author }}, <span class="text-base not-italic text-neutral-400">{{ $age }}</span>
                         </h2>
-                        <p class="font-mono-tech truncate text-[9px] uppercase tracking-[0.22em] text-[#C5A47E]">
-                            {{ $secretIntention }}
+                        <p class="font-mono-tech truncate text-[9px] uppercase tracking-[0.2em] text-[#C5A47E]">
+                            {{ $rdvTypeLabel }}
                         </p>
                     </div>
                     <span class="shrink-0 border border-[#C5A47E]/40 bg-[#C5A47E]/10 px-2.5 py-1 font-mono-tech text-[10px] font-bold text-[#C5A47E]">
@@ -134,6 +157,11 @@
                         class="h-full w-full object-cover transition-all duration-1000"
                     >
 
+                    {{-- Badge du Créneau Nocturne (remplace le Prix €) --}}
+                    <div class="absolute right-2 top-2 border border-[#C5A47E]/40 bg-[#08080A]/90 px-2.5 py-1 font-mono-tech text-[9px] uppercase tracking-wider text-[#C5A47E] backdrop-blur-md">
+                        {{ $nocturnalSlot }}
+                    </div>
+
                     {{-- Sceau de Bronze à maintenir 1,2s --}}
                     <div
                         x-show="!isUnsealed('{{ $sealKey }}')"
@@ -147,7 +175,7 @@
                             @mousedown.prevent.stop="startHoldSeal('{{ $sealKey }}', $event)"
                             @touchstart.prevent.stop="startHoldSeal('{{ $sealKey }}', $event)"
                             :class="holdingId === '{{ $sealKey }}' ? 'seal-holding' : 'hover:scale-105'"
-                            class="relative flex h-18 w-18 h-[74px] w-[74px] items-center justify-center rounded-full border border-[#C5A47E] bg-[#08080A]/90 text-[#C5A47E] shadow-2xl transition"
+                            class="relative flex h-[74px] w-[74px] items-center justify-center rounded-full border border-[#C5A47E] bg-[#08080A]/90 text-[#C5A47E] shadow-2xl transition"
                         >
                             <svg class="pointer-events-none absolute -inset-1.5 h-[86px] w-[86px] -rotate-90" viewBox="0 0 100 100">
                                 <circle cx="50" cy="50" r="46" stroke="rgba(197, 164, 126, 0.2)" stroke-width="2" fill="none" />
@@ -188,7 +216,7 @@
                 <div>
                     <div class="border border-white/10 bg-[#070709] px-3.5 py-2.5">
                         <div class="flex items-center justify-between font-mono-tech text-[9px] uppercase tracking-[0.22em] text-neutral-500">
-                            <span>OBJET DE COUVERTURE</span>
+                            <span>MOT-CODE DE COUVERTURE</span>
                             <span>N° {{ $indexNumber }}</span>
                         </div>
                         <p class="font-serif-luxury mt-0.5 truncate text-base italic text-[#EAE6DF]">

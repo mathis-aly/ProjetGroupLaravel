@@ -1,12 +1,61 @@
 @php
     $user = $user ?? auth()->user();
     $listingsCount = $user?->listings()->count() ?? 0;
+    $secretProfile = $user?->secretProfile() ?? [];
+
+    $presetPortraits = [
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=85',
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1000&q=85',
+        'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1000&q=85',
+        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1000&q=85',
+        'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1000&q=85',
+        'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1000&q=85',
+    ];
+
+    $rdvTypesList = [
+        'Bar Clandestin & Grands Crus',
+        'Souper Clandestin à Huis Clos',
+        'Suite Privée & Hôtel Particulier',
+        'Virée Nocturne & Évasion',
+        'Club de Jazz & Nuit Électrique',
+        'Gala, Opéra & Soirée Habillée',
+        'Salon Littéraire & Heure Tardive',
+        'Alchimie Intense & Sans Filtre',
+    ];
+
+    $nocturnalHoursList = [
+        '21h00 • Premier Verre Feutré (Degré I)',
+        '22h30 • Souper aux Chandelles (Degré II)',
+        '23h45 • Confidences de Minuit (Degré III)',
+        '01h15 • Jusqu’à l’Aube (Degré IV)',
+    ];
 @endphp
 
 <x-layouts.public title="Mon Compte | UBERBITE / ARCHIVE">
     <div
         x-data="{
-            activeLogeTab: 'correspondance' // 'correspondance' | 'aura' | 'passeport'
+            activeLogeTab: '{{ session('status') === 'secret-profile-updated' ? 'profil_secret' : 'profil_secret' }}',
+            previewUnsealed: true,
+            secretAlias: {{ Js::from(old('alias', $secretProfile['alias'] ?? $user->name)) }},
+            secretAge: {{ Js::from(old('age', $secretProfile['age'] ?? 28)) }},
+            secretGender: {{ Js::from(old('gender', $secretProfile['gender'] ?? 'homme')) }},
+            secretSeeking: {{ Js::from(old('seeking', $secretProfile['seeking'] ?? 'femmes')) }},
+            secretDistrict: {{ Js::from(old('district', $secretProfile['district'] ?? 'Quartier Saint-Étienne')) }},
+            secretRdvType: {{ Js::from(old('rdv_type', $secretProfile['rdv_type'] ?? 'Bar Clandestin & Grands Crus')) }},
+            secretHour: {{ Js::from(old('preferred_hour', $secretProfile['preferred_hour'] ?? '22h30 • Souper aux Chandelles (Degré II)')) }},
+            secretBio: {{ Js::from(old('bio', $secretProfile['bio'] ?? '')) }},
+            secretPassphrase: {{ Js::from(old('passphrase', $secretProfile['passphrase'] ?? 'La montre retarde toujours à minuit.')) }},
+            secretPhotoUrl: {{ Js::from($secretProfile['photo'] ?? $presetPortraits[0]) }},
+
+            handleFilePreview(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.secretPhotoUrl = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
         }"
         class="mx-auto max-w-7xl px-6 py-8"
     >
@@ -22,14 +71,21 @@
         >
             <div class="relative z-10 flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
                 <div class="flex flex-col gap-5 sm:flex-row sm:items-center">
+                    {{-- Avatar : Initiale en Façade vs Photo du Profil Secret en Mode Secret --}}
                     <div
-                        :class="secretMode
-                            ? 'border border-[#C5A47E] bg-[#08080A] text-[#C5A47E]'
-                            : 'border border-[#111111] bg-[#111111] text-[#F6F5F0]'"
-                        class="font-serif-luxury flex h-16 w-16 shrink-0 items-center justify-center text-3xl italic"
+                        x-show="!secretMode"
+                        class="font-serif-luxury flex h-16 w-16 shrink-0 items-center justify-center border border-[#111111] bg-[#111111] text-3xl italic text-[#F6F5F0]"
                     >
                         {{ strtoupper(substr($user->name, 0, 1)) }}
                     </div>
+                    <img
+                        x-cloak
+                        x-show="secretMode"
+                        :src="secretPhotoUrl"
+                        alt="Portrait secret"
+                        class="h-16 w-16 shrink-0 border border-[#C5A47E] object-cover"
+                    >
+
                     <div>
                         <span
                             :class="secretMode
@@ -43,38 +99,49 @@
 
                         <h1 class="font-serif-luxury text-3xl font-bold tracking-tight sm:text-5xl">
                             <span x-text="secretMode ? 'Bonsoir,' : 'Bonjour,'">Bonjour,</span>
-                            <span :class="secretMode ? 'text-[#C5A47E] font-normal italic' : 'text-[#111111]'">{{ $user->name }}</span>
+                            <span
+                                :class="secretMode ? 'text-[#C5A47E] font-normal italic' : 'text-[#111111]'"
+                                x-text="secretMode ? secretAlias : '{{ addslashes($user->name) }}'"
+                            >{{ $user->name }}</span>
                         </h1>
                     </div>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-3">
-                    {{-- Navigation par Loges en mode secret (évite le scroll vertical) --}}
+                    {{-- Navigation par Loges en mode secret --}}
                     <template x-if="secretMode">
                         <div class="flex flex-wrap items-center border border-[#C5A47E]/30 bg-[#08080A] p-1">
                             <button
                                 type="button"
+                                @click="activeLogeTab = 'profil_secret'"
+                                :class="activeLogeTab === 'profil_secret' ? 'bg-[#C5A47E] text-[#08080A]' : 'text-[#EAE6DF]/75 hover:text-[#C5A47E]'"
+                                class="px-3.5 py-2 font-mono-tech text-[10px] font-bold uppercase tracking-[0.18em] transition"
+                            >
+                                I. Mon Profil Secret
+                            </button>
+                            <button
+                                type="button"
                                 @click="activeLogeTab = 'correspondance'"
                                 :class="activeLogeTab === 'correspondance' ? 'bg-[#C5A47E] text-[#08080A]' : 'text-[#EAE6DF]/75 hover:text-[#C5A47E]'"
-                                class="px-3.5 py-2 font-mono-tech text-[10px] font-bold uppercase tracking-[0.2em] transition"
+                                class="px-3.5 py-2 font-mono-tech text-[10px] font-bold uppercase tracking-[0.18em] transition"
                             >
-                                I. Correspondances (3)
+                                II. Correspondances (3)
                             </button>
                             <button
                                 type="button"
                                 @click="activeLogeTab = 'aura'"
                                 :class="activeLogeTab === 'aura' ? 'bg-[#C5A47E] text-[#08080A]' : 'text-[#EAE6DF]/75 hover:text-[#C5A47E]'"
-                                class="px-3.5 py-2 font-mono-tech text-[10px] font-bold uppercase tracking-[0.2em] transition"
+                                class="px-3.5 py-2 font-mono-tech text-[10px] font-bold uppercase tracking-[0.18em] transition"
                             >
-                                II. Aura & Métriques
+                                III. Aura & Métriques
                             </button>
                             <button
                                 type="button"
                                 @click="activeLogeTab = 'passeport'"
                                 :class="activeLogeTab === 'passeport' ? 'bg-[#C5A47E] text-[#08080A]' : 'text-[#EAE6DF]/75 hover:text-[#C5A47E]'"
-                                class="px-3.5 py-2 font-mono-tech text-[10px] font-bold uppercase tracking-[0.2em] transition"
+                                class="px-3.5 py-2 font-mono-tech text-[10px] font-bold uppercase tracking-[0.18em] transition"
                             >
-                                III. Passeport & Sécurité
+                                IV. Compte & Sécurité
                             </button>
                         </div>
                     </template>
@@ -94,7 +161,357 @@
         </div>
 
         {{-- ======================================================================= --}}
-        {{-- SECTION 1 : STATISTIQUES FICTIVES (Affiché en Façade ou Loge II)        --}}
+        {{-- LOGE I (MODE SECRET UNIQUEMENT) : ÉDITEUR COMPLET DU PROFIL SECRET      --}}
+        {{-- ======================================================================= --}}
+        <section
+            x-cloak
+            x-show="secretMode && activeLogeTab === 'profil_secret'"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            class="mt-10"
+            aria-labelledby="secret-profile-title"
+        >
+            <div class="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+                <div>
+                    <p class="font-mono-tech text-xs font-bold uppercase tracking-[0.25em] text-[#C5A47E]">
+                        LOGE I / IDENTITÉ NOCTURNE & PRÉFÉRENCES DE RENCONTRE
+                    </p>
+                    <h2 id="secret-profile-title" class="font-serif-luxury mt-1 text-3xl font-normal italic text-[#EAE6DF] sm:text-4xl">
+                        Compléter mon Profil Secret Vesper
+                    </h2>
+                </div>
+
+                @if (session('status') === 'secret-profile-updated')
+                    <span class="border border-[#C5A47E] bg-[#C5A47E]/15 px-4 py-2 font-mono-tech text-xs font-bold uppercase tracking-widest text-[#C5A47E]">
+                        ✓ Profil Secret mis à jour avec succès
+                    </span>
+                @endif
+            </div>
+
+            <div class="grid gap-8 lg:grid-cols-12">
+                {{-- Formulaire complet du Profil Secret (7 cols) --}}
+                <form
+                    method="POST"
+                    action="{{ route('profile.secret.update') }}"
+                    enctype="multipart/form-data"
+                    @submit="userPrefs.gender = secretGender; userPrefs.seeking = secretSeeking; userPrefs.district = secretDistrict; userPrefs.rdvType = secretRdvType; userPrefs.isVerified = true; userPrefs.completed = true; saveUserPrefs()"
+                    class="space-y-6 border border-[#C5A47E]/30 bg-[#0C0C0F] p-6 sm:p-8 lg:col-span-7"
+                >
+                    @csrf
+
+                    {{-- Bandeau Statut Vérification & Abonnement --}}
+                    <div class="flex flex-wrap items-center justify-between gap-3 border border-[#C5A47E]/25 bg-[#08080A] p-4">
+                        <div class="flex items-center gap-3">
+                            <span class="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-500/40 bg-emerald-950/60 text-xs text-emerald-300">✓</span>
+                            <div>
+                                <p class="font-mono-tech text-[10px] font-bold uppercase tracking-widest text-[#C5A47E]">
+                                    STATUT : <span x-text="userPrefs.isVerified ? 'PROFIL VÉRIFIÉ VESPER' : 'EN ATTENTE DE VÉRIFICATION'"></span>
+                                </p>
+                                <p class="text-[11px] text-neutral-400">
+                                    <span x-text="subscriptionTier !== 'free'
+                                        ? 'Abonnement actif : ' + (subscriptionTier === 'or_noir' ? 'Sceau d\'Or Noir (VIP)' : 'Clé de Bronze')
+                                        : (!freeRdvUsed ? '🎁 Votre 1er Rendez-vous Offert est disponible' : '1er RDV utilisé • Pass Éclipse')"></span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button
+                                type="button"
+                                @click="onboardingStep = 3; showOnboardingModal = true"
+                                class="border border-[#C5A47E]/40 px-3 py-1.5 font-mono-tech text-[9px] uppercase tracking-widest text-[#EAE6DF] hover:border-[#C5A47E]"
+                            >◎ Vérification</button>
+                            <button
+                                type="button"
+                                @click="showSubscriptionModal = true"
+                                class="bg-[#C5A47E] px-3 py-1.5 font-mono-tech text-[9px] font-bold uppercase tracking-widest text-[#08080A] hover:bg-[#D8BC98]"
+                            >🗝️ Gérer mon Pass</button>
+                        </div>
+                    </div>
+
+                    {{-- 1. Photo du profil secret (Upload ou Galerie Clair-Obscur) --}}
+                    <div class="border-b border-[#C5A47E]/15 pb-6">
+                        <label class="font-mono-tech block text-[11px] font-bold uppercase tracking-wider text-[#C5A47E]">
+                            I / PHOTOGRAPHIE DE VOTRE PROFIL SECRET
+                        </label>
+                        <p class="mt-1 text-xs text-neutral-400">
+                            Importez votre propre portrait ou choisissez une photographie clair-obscur. Elle restera voilée tant qu’un membre n’aura pas maintenu votre Sceau de Bronze.
+                        </p>
+
+                        <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+                            <img :src="secretPhotoUrl" alt="Aperçu portrait" class="h-20 w-20 shrink-0 border border-[#C5A47E] object-cover">
+
+                            <div class="flex-1">
+                                <label class="inline-flex cursor-pointer items-center gap-2 border border-[#C5A47E]/50 bg-[#08080A] px-4 py-2.5 font-mono-tech text-[10px] font-bold uppercase tracking-widest text-[#C5A47E] transition hover:bg-[#C5A47E] hover:text-[#08080A]">
+                                    <span>↑ Importer une photo personnelle</span>
+                                    <input type="file" name="photo_upload" accept="image/*" @change="handleFilePreview($event)" class="hidden">
+                                </label>
+                                <input type="hidden" name="preset_photo" :value="secretPhotoUrl.startsWith('data:') ? '' : secretPhotoUrl">
+                                <p class="mt-1.5 font-mono-tech text-[9px] uppercase tracking-wider text-neutral-500">
+                                    JPG, PNG OU WEBP (MAX 4 MO) — OU SÉLECTIONNEZ UN PORTRAIT CI-DESSOUS :
+                                </p>
+                            </div>
+                        </div>
+
+                        {{-- Galerie de 6 portraits prédéfinis --}}
+                        <div class="mt-4 grid grid-cols-6 gap-2.5">
+                            @foreach ($presetPortraits as $idx => $pUrl)
+                                <button
+                                    type="button"
+                                    @click="secretPhotoUrl = '{{ $pUrl }}'"
+                                    :class="secretPhotoUrl === '{{ $pUrl }}' ? 'border-2 border-[#C5A47E] scale-105' : 'border border-white/15 opacity-55 hover:opacity-100'"
+                                    class="relative h-14 w-full overflow-hidden bg-black transition"
+                                >
+                                    <img src="{{ $pUrl }}" alt="Preset {{ $idx + 1 }}" class="h-full w-full object-cover grayscale contrast-125">
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    {{-- 2. Pseudonyme & Âge --}}
+                    <div class="grid gap-5 sm:grid-cols-3">
+                        <div class="sm:col-span-2">
+                            <label for="secret_alias" class="font-mono-tech block text-[11px] font-bold uppercase tracking-wider text-[#C5A47E]">
+                                II / PSEUDONYME OU NOM D'INITIÉ
+                            </label>
+                            <input
+                                id="secret_alias"
+                                type="text"
+                                name="alias"
+                                x-model="secretAlias"
+                                required
+                                class="mt-2 block w-full border border-[#C5A47E]/30 bg-[#08080A] px-4 py-3 text-sm text-[#EAE6DF] focus:border-[#C5A47E] focus:outline-none"
+                            >
+                        </div>
+
+                        <div>
+                            <label for="secret_age" class="font-mono-tech block text-[11px] font-bold uppercase tracking-wider text-[#C5A47E]">
+                                III / ÂGE
+                            </label>
+                            <input
+                                id="secret_age"
+                                type="number"
+                                name="age"
+                                min="18"
+                                max="99"
+                                x-model="secretAge"
+                                required
+                                class="mt-2 block w-full border border-[#C5A47E]/30 bg-[#08080A] px-4 py-3 text-sm text-[#EAE6DF] focus:border-[#C5A47E] focus:outline-none"
+                            >
+                        </div>
+                    </div>
+
+                    {{-- 2bis. Genre & Orientation sexuelle (Filtre les partenaires de la Roue) --}}
+                    <div class="grid gap-5 sm:grid-cols-2">
+                        <div>
+                            <label for="secret_gender" class="font-mono-tech block text-[11px] font-bold uppercase tracking-wider text-[#C5A47E]">
+                                III-A / VOTRE GENRE
+                            </label>
+                            <select
+                                id="secret_gender"
+                                name="gender"
+                                x-model="secretGender"
+                                @change="userPrefs.gender = secretGender; saveUserPrefs()"
+                                class="mt-2 block w-full border border-[#C5A47E]/30 bg-[#08080A] px-4 py-3 text-sm text-[#EAE6DF] focus:border-[#C5A47E] focus:outline-none"
+                            >
+                                <option value="homme">Un Homme</option>
+                                <option value="femme">Une Femme</option>
+                                <option value="non_binaire">Non-Binaire / Esprit Libre</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="secret_seeking" class="font-mono-tech block text-[11px] font-bold uppercase tracking-wider text-[#C5A47E]">
+                                III-B / ORIENTATION (PARTENAIRES RECHERCHÉS)
+                            </label>
+                            <select
+                                id="secret_seeking"
+                                name="seeking"
+                                x-model="secretSeeking"
+                                @change="userPrefs.seeking = secretSeeking; saveUserPrefs()"
+                                class="mt-2 block w-full border border-[#C5A47E]/30 bg-[#08080A] px-4 py-3 text-sm text-[#EAE6DF] focus:border-[#C5A47E] focus:outline-none"
+                            >
+                                <option value="femmes">Je recherche des Femmes</option>
+                                <option value="hommes">Je recherche des Hommes</option>
+                                <option value="tous">Ouvert(e) à tous les Genres</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- 3. Type de Rendez-vous recherché & Créneau Nocturne --}}
+                    <div class="grid gap-5 sm:grid-cols-2">
+                        <div>
+                            <label for="secret_rdv_type" class="font-mono-tech block text-[11px] font-bold uppercase tracking-wider text-[#C5A47E]">
+                                IV / TYPE DE RENDEZ-VOUS RECHERCHÉ
+                            </label>
+                            <select
+                                id="secret_rdv_type"
+                                name="rdv_type"
+                                x-model="secretRdvType"
+                                class="mt-2 block w-full border border-[#C5A47E]/30 bg-[#08080A] px-4 py-3 text-sm text-[#EAE6DF] focus:border-[#C5A47E] focus:outline-none"
+                            >
+                                @foreach ($rdvTypesList as $rType)
+                                    <option value="{{ $rType }}">{{ $rType }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="secret_preferred_hour" class="font-mono-tech block text-[11px] font-bold uppercase tracking-wider text-[#C5A47E]">
+                                V / CRÉNEAU & DEGRÉ DE LA NUIT
+                            </label>
+                            <select
+                                id="secret_preferred_hour"
+                                name="preferred_hour"
+                                x-model="secretHour"
+                                class="mt-2 block w-full border border-[#C5A47E]/30 bg-[#08080A] px-4 py-3 text-sm text-[#EAE6DF] focus:border-[#C5A47E] focus:outline-none"
+                            >
+                                @foreach ($nocturnalHoursList as $nHour)
+                                    <option value="{{ $nHour }}">{{ $nHour }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- 4. Quartier & Phrase-code --}}
+                    <div class="grid gap-5 sm:grid-cols-2">
+                        <div>
+                            <label for="secret_district" class="font-mono-tech block text-[11px] font-bold uppercase tracking-wider text-[#C5A47E]">
+                                VI / QUARTIER DE PRÉDILECTION
+                            </label>
+                            <input
+                                id="secret_district"
+                                type="text"
+                                name="district"
+                                x-model="secretDistrict"
+                                placeholder="Ex. Quartier Saint-Étienne"
+                                required
+                                class="mt-2 block w-full border border-[#C5A47E]/30 bg-[#08080A] px-4 py-3 text-sm text-[#EAE6DF] focus:border-[#C5A47E] focus:outline-none"
+                            >
+                        </div>
+
+                        <div>
+                            <label for="secret_passphrase" class="font-mono-tech block text-[11px] font-bold uppercase tracking-wider text-[#C5A47E]">
+                                VII / PHRASE-CODE DE RECONNAISSANCE
+                            </label>
+                            <input
+                                id="secret_passphrase"
+                                type="text"
+                                name="passphrase"
+                                x-model="secretPassphrase"
+                                placeholder="Ex. La montre retarde toujours à minuit."
+                                class="mt-2 block w-full border border-[#C5A47E]/30 bg-[#08080A] px-4 py-3 text-sm text-[#EAE6DF] focus:border-[#C5A47E] focus:outline-none"
+                            >
+                        </div>
+                    </div>
+
+                    {{-- 5. Description secrète & Confession --}}
+                    <div>
+                        <label for="secret_bio" class="font-mono-tech block text-[11px] font-bold uppercase tracking-wider text-[#C5A47E]">
+                            VIII / DESCRIPTION SECRÈTE & CONFESSION (VISIBLE APRÈS DESCELLEMENT)
+                        </label>
+                        <textarea
+                            id="secret_bio"
+                            name="bio"
+                            rows="4"
+                            x-model="secretBio"
+                            required
+                            placeholder="Décrivez votre personnalité nocturne, ce qui vous attire et l'atmosphère de rendez-vous que vous recherchez..."
+                            class="mt-2 block w-full border border-[#C5A47E]/30 bg-[#08080A] px-4 py-3 text-sm leading-relaxed text-[#EAE6DF] focus:border-[#C5A47E] focus:outline-none"
+                        ></textarea>
+                    </div>
+
+                    <div class="flex items-center justify-end border-t border-[#C5A47E]/20 pt-5">
+                        <button
+                            type="submit"
+                            class="bg-[#C5A47E] px-8 py-4 font-mono-tech text-xs font-bold uppercase tracking-[0.25em] text-[#08080A] shadow-xl transition hover:bg-[#D8BC98]"
+                        >
+                            Sceller & Enregistrer mon Profil Secret →
+                        </button>
+                    </div>
+                </form>
+
+                {{-- Aperçu Temps Réel de la Carte du Membre (5 cols) --}}
+                <div class="flex flex-col justify-between border border-[#C5A47E]/30 bg-[#0B0B0E] p-6 sm:p-8 lg:col-span-5">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-[#C5A47E]/20 pb-3">
+                            <span class="font-mono-tech text-[10px] font-bold uppercase tracking-[0.25em] text-[#C5A47E]">
+                                APERÇU EN DIRECT DE VOTRE DOSSIER
+                            </span>
+                            <button
+                                type="button"
+                                @click="previewUnsealed = !previewUnsealed"
+                                class="border border-[#C5A47E]/40 bg-[#08080A] px-2.5 py-1 font-mono-tech text-[9px] uppercase tracking-widest text-[#C5A47E] transition hover:bg-[#C5A47E] hover:text-[#08080A]"
+                                x-text="previewUnsealed ? 'Voir état Scellé (Voilé)' : 'Voir état Descellé (Couleur)'"
+                            ></button>
+                        </div>
+
+                        {{-- Portrait avec test d'état Scellé / Descellé --}}
+                        <div class="relative mt-5 h-72 w-full overflow-hidden border border-[#C5A47E]/25 bg-black">
+                            <img
+                                :src="secretPhotoUrl"
+                                alt="Aperçu de votre portrait"
+                                :class="previewUnsealed
+                                    ? 'grayscale-0 blur-0 scale-100 brightness-95'
+                                    : 'grayscale contrast-125 blur-md scale-110 brightness-50'"
+                                class="h-full w-full object-cover transition-all duration-700"
+                            >
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#08080A] via-transparent to-transparent"></div>
+
+                            <div class="absolute right-3 top-3 border border-[#C5A47E]/40 bg-[#08080A]/90 px-3 py-1 font-mono-tech text-[9px] uppercase tracking-wider text-[#C5A47E]">
+                                <span x-text="secretHour"></span>
+                            </div>
+
+                            <div
+                                x-show="!previewUnsealed"
+                                class="absolute inset-0 flex flex-col items-center justify-center bg-black/40 p-4 text-center"
+                            >
+                                <div class="flex h-20 w-20 items-center justify-center rounded-full border border-[#C5A47E] bg-[#08080A]/90 font-serif-luxury text-3xl italic text-[#C5A47E]">
+                                    V
+                                </div>
+                                <p class="font-mono-tech mt-2 text-[9px] uppercase tracking-widest text-[#C5A47E]">
+                                    APERÇU SCELLÉ (AVANT MAINTIEN 1,2S)
+                                </p>
+                            </div>
+
+                            <div class="absolute bottom-3 left-4 right-4">
+                                <p class="font-mono-tech text-[9px] uppercase tracking-[0.25em] text-[#C5A47E]" x-text="'📍 ' + secretDistrict"></p>
+                                <h3 class="font-serif-luxury text-3xl font-normal italic text-white" x-text="secretAlias + ', ' + secretAge"></h3>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 grid grid-cols-2 gap-2.5">
+                            <div class="border border-[#C5A47E]/20 bg-[#08080A] p-3">
+                                <p class="font-mono-tech text-[8px] uppercase tracking-[0.22em] text-neutral-500">TYPE DE RDV RECHERCHÉ</p>
+                                <p class="mt-1 text-xs font-bold text-[#C5A47E]" x-text="secretRdvType"></p>
+                            </div>
+                            <div class="border border-[#C5A47E]/20 bg-[#08080A] p-3">
+                                <p class="font-mono-tech text-[8px] uppercase tracking-[0.22em] text-neutral-500">CRÉNEAU NOCTURNE</p>
+                                <p class="mt-1 text-xs font-bold text-[#EAE6DF]" x-text="secretHour"></p>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 border border-[#C5A47E]/20 bg-[#08080A] p-4">
+                            <p class="font-mono-tech text-[9px] uppercase tracking-[0.22em] text-neutral-500">
+                                PHRASE-CODE : <span class="text-[#C5A47E]" x-text="'« ' + secretPassphrase + ' »'"></span>
+                            </p>
+                            <p
+                                class="font-serif-luxury mt-2 text-base italic leading-relaxed transition-all duration-500"
+                                :class="previewUnsealed ? 'text-[#EAE6DF]' : 'text-neutral-500 blur-[3px]'"
+                                x-text="'« ' + secretBio + ' »'"
+                            ></p>
+                        </div>
+                    </div>
+
+                    <p class="mt-4 font-mono-tech text-[10px] uppercase tracking-widest text-neutral-500">
+                        CE PROFIL S'APPLIQUE AUTOMATIQUEMENT À VOS ANNONCES-CODES SUR LE CADRAN VESPER.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        {{-- ======================================================================= --}}
+        {{-- SECTION 1 : STATISTIQUES FICTIVES (Affiché en Façade ou Loge III)       --}}
         {{-- ======================================================================= --}}
         <section
             x-show="!secretMode || activeLogeTab === 'aura'"
@@ -109,7 +526,7 @@
                     <p
                         :class="secretMode ? 'text-[#C5A47E]' : 'text-neutral-500'"
                         class="font-mono-tech text-xs font-bold uppercase tracking-[0.25em]"
-                        x-text="secretMode ? 'LOGE II / AURA & MAGNÉTISME NOCTURNE' : '01 / MÉTRIQUES VENDEUR'"
+                        x-text="secretMode ? 'LOGE III / AURA & MAGNÉTISME NOCTURNE' : '01 / MÉTRIQUES VENDEUR'"
                     >01 / MÉTRIQUES VENDEUR</p>
                     <h2
                         id="stats-title"
@@ -213,7 +630,7 @@
                     <div class="my-6 space-y-4">
                         <div>
                             <div class="flex justify-between font-mono-tech text-xs font-bold">
-                                <span x-text="secretMode ? 'Taux de réponse' : 'Taux de réponse'"></span>
+                                <span>Taux de réponse</span>
                                 <span>96%</span>
                             </div>
                             <div class="mt-1.5 h-1 w-full bg-white/15">
@@ -252,7 +669,7 @@
         </section>
 
         {{-- ======================================================================= --}}
-        {{-- SECTION 2 : MESSAGERIE VENDEUR <-> ACHETEUR (Façade ou Loge I)          --}}
+        {{-- SECTION 2 : MESSAGERIE VENDEUR <-> ACHETEUR (Façade ou Loge II)         --}}
         {{-- ======================================================================= --}}
         <section
             x-show="!secretMode || activeLogeTab === 'correspondance'"
@@ -337,15 +754,15 @@
                         buyerName: 'Éléonore V., 28',
                         buyerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
                         buyerStatus: 'Portrait Descellé',
-                        buyerCity: 'Saint-Étienne • 98% d\'affinité',
+                        buyerCity: 'Saint-Étienne • Bar Clandestin & Grands Crus',
                         articleTitle: 'Code : « Chronographe 1968 »',
-                        articlePrice: 'Souper Clandestin',
+                        articlePrice: '22h30 • Degré II',
                         offerStatus: 'Table Réservée',
                         unread: 1,
                         messages: [
                             { id: 1, sender: 'buyer', text: 'Vous avez levé mon sceau... Votre annonce pour ce « Chronographe 1968 » trahit un goût certain pour les heures tardives.', time: 'Hier, 22:14' },
                             { id: 2, sender: 'seller', text: 'Bonsoir Éléonore. Votre portrait méritait que l’on s’y attarde.', time: 'Hier, 22:20' },
-                            { id: 3, sender: 'buyer', text: 'J’ai retenu une table à l’écart rue des Filatiers ce soir à 21h30. Viendrez-vous me donner l’heure exacte ?', time: 'Aujourd\'hui, 19:45' }
+                            { id: 3, sender: 'buyer', text: 'J’ai retenu une table à l’écart rue des Filatiers ce soir à 22h30. Viendrez-vous me donner l’heure exacte ?', time: 'Aujourd\'hui, 19:45' }
                         ],
                         autoReplies: [
                             'Parfait. Mot de passe à l’entrée : Vesper. Je vous attends autour d’un verre.',
@@ -358,9 +775,9 @@
                         buyerName: 'Gabriel M., 32',
                         buyerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80',
                         buyerStatus: 'Présent',
-                        buyerCity: 'Les Carmes • 95% d\'affinité',
+                        buyerCity: 'Les Carmes • Club de Jazz & Nuit Électrique',
                         articleTitle: 'Code : « Vinyle Miles Davis »',
-                        articlePrice: 'Heure Tardive',
+                        articlePrice: '23h45 • Degré III',
                         offerStatus: 'Invitation Reçue',
                         unread: 1,
                         messages: [
@@ -378,9 +795,9 @@
                         buyerName: 'Soline D., 26',
                         buyerAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=300&q=80',
                         buyerStatus: 'Il y a 5 min',
-                        buyerCity: 'Capitole • 93% d\'affinité',
+                        buyerCity: 'Capitole • Suite Privée & Hôtel Particulier',
                         articleTitle: 'Code : « Miroir Vénitien »',
-                        articlePrice: 'Complicité Suivie',
+                        articlePrice: '01h15 • Degré IV',
                         offerStatus: 'Affinité Rare',
                         unread: 0,
                         messages: [
@@ -461,7 +878,7 @@
                     <p
                         :class="secretMode ? 'text-[#C5A47E]' : 'text-neutral-500'"
                         class="font-mono-tech text-xs font-bold uppercase tracking-[0.25em]"
-                        x-text="secretMode ? 'LOGE I / CORRESPONDANCES CONFIDENTIELLES' : '02 / ÉCHANGES & NÉGOCIATIONS'"
+                        x-text="secretMode ? 'LOGE II / CORRESPONDANCES CONFIDENTIELLES' : '02 / ÉCHANGES & NÉGOCIATIONS'"
                     >02 / ÉCHANGES & NÉGOCIATIONS</p>
                     <h2
                         id="messagerie-title"
@@ -480,7 +897,6 @@
                     : 'border-[#DFDDD4] bg-white'"
                 class="grid overflow-hidden border lg:grid-cols-[350px_1fr]"
             >
-                {{-- Liste des conversations (gauche) --}}
                 <div
                     :class="secretMode ? 'border-[#C5A47E]/20 bg-[#08080A]' : 'border-[#DFDDD4] bg-[#F6F5F0]'"
                     class="border-b lg:border-b-0 lg:border-r"
@@ -541,7 +957,6 @@
                     </div>
                 </div>
 
-                {{-- Fenêtre de discussion active (droite) --}}
                 <div class="flex flex-col justify-between">
                     <div
                         :class="secretMode ? 'border-[#C5A47E]/20 bg-[#0E0E12]' : 'border-[#DFDDD4] bg-white'"
@@ -571,7 +986,7 @@
                             class="flex flex-wrap items-center gap-3 border px-4 py-2"
                         >
                             <div>
-                                <p class="font-mono-tech text-[9px] font-bold uppercase tracking-widest opacity-60" x-text="secretMode ? 'CODE DE COUVERTURE' : 'ANNONCE CONCERNÉE'"></p>
+                                <p class="font-mono-tech text-[9px] font-bold uppercase tracking-widest opacity-60" x-text="secretMode ? 'CODE & CRÉNEAU' : 'ANNONCE CONCERNÉE'"></p>
                                 <p class="text-xs font-bold">
                                     <span x-text="activeConv.articleTitle"></span> — <span class="text-[#C5A47E]" x-text="activeConv.articlePrice"></span>
                                 </p>
@@ -579,7 +994,6 @@
                         </div>
                     </div>
 
-                    {{-- Fil des messages --}}
                     <div
                         x-ref="messagesContainer"
                         :class="secretMode ? 'bg-[#070709]' : 'bg-[#F6F5F0]'"
@@ -619,7 +1033,6 @@
                         </div>
                     </div>
 
-                    {{-- Réponses rapides + Zone de saisie --}}
                     <div
                         :class="secretMode ? 'border-[#C5A47E]/20 bg-[#0B0B0E]' : 'border-[#DFDDD4] bg-white'"
                         class="border-t p-4 sm:px-6"
@@ -647,9 +1060,9 @@
                             <span class="font-mono-tech text-[10px] font-bold uppercase text-[#C5A47E]">BILLETS RAPIDES :</span>
                             <button
                                 type="button"
-                                @click="sendQuickReply('Votre invitation est acceptée. Je vous rejoins à 21h30.')"
+                                @click="sendQuickReply('Votre invitation est acceptée. Je vous rejoins à 22h30.')"
                                 class="border border-[#C5A47E]/30 bg-[#08080A] px-3 py-1 font-mono-tech text-[10px] uppercase tracking-wider text-[#EAE6DF] transition hover:border-[#C5A47E] hover:text-[#C5A47E]"
-                            >I. Accepter 21h30</button>
+                            >I. Accepter 22h30</button>
                             <button
                                 type="button"
                                 @click="sendQuickReply('Votre mot-code m\'a intrigué. Gardez-moi votre soirée.')"
@@ -688,7 +1101,7 @@
         </section>
 
         {{-- ======================================================================= --}}
-        {{-- SECTION 3 : MES INFORMATIONS & SÉCURITÉ (Façade ou Loge III)            --}}
+        {{-- SECTION 3 : MES INFORMATIONS & SÉCURITÉ (Façade ou Loge IV)             --}}
         {{-- ======================================================================= --}}
         <section
             x-show="!secretMode || activeLogeTab === 'passeport'"
@@ -702,13 +1115,13 @@
                 <p
                     :class="secretMode ? 'text-[#C5A47E]' : 'text-neutral-500'"
                     class="font-mono-tech text-xs font-bold uppercase tracking-[0.25em]"
-                    x-text="secretMode ? 'LOGE III / SCEAU & IDENTITÉ' : '03 / PARAMÈTRES PERSONNELS'"
+                    x-text="secretMode ? 'LOGE IV / COMPTE & SÉCURITÉ' : '03 / PARAMÈTRES PERSONNELS'"
                 >03 / PARAMÈTRES PERSONNELS</p>
                 <h2
                     id="compte-infos-title"
                     :class="secretMode ? 'text-[#EAE6DF] font-normal italic' : 'text-[#111111]'"
                     class="font-serif-luxury mt-1 text-3xl font-bold sm:text-4xl"
-                    x-text="secretMode ? 'Passeport Vesper & Confidentialité' : 'Mes Informations & Sécurité'"
+                    x-text="secretMode ? 'Identifiants & Clé de Chiffrement' : 'Mes Informations & Sécurité'"
                 >
                     Mes Informations & Sécurité
                 </h2>
@@ -720,7 +1133,7 @@
             >
                 <dl class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                     <div :class="secretMode ? 'border-[#C5A47E]/20 bg-[#08080A]' : 'border-[#DFDDD4] bg-[#F6F5F0]'" class="border p-4">
-                        <dt class="font-mono-tech text-[10px] font-bold uppercase tracking-widest opacity-60">Nom / Pseudonyme</dt>
+                        <dt class="font-mono-tech text-[10px] font-bold uppercase tracking-widest opacity-60">Nom de façade</dt>
                         <dd class="mt-1 text-base font-extrabold">{{ $user->name }}</dd>
                     </div>
 

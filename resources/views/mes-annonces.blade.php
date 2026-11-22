@@ -64,13 +64,20 @@
             @if ($articles->count() > 0)
                 <div class="grid gap-7 md:grid-cols-2 lg:grid-cols-3">
                     @foreach ($articles as $article)
+                        @php
+                            $uSecret = $article->user?->secretProfile() ?? [];
+                        @endphp
                         <x-article
                             :slug="$article['slug']"
                             :title="$article['title']"
                             :description="$article['description']"
                             :condition="$article->condition->Label()"
                             :price="$article['price']"
-                            :author="$article->user?->name ?? 'Inconnu'"
+                            :author="$uSecret['alias'] ?? ($article->user?->name ?? 'Inconnu')"
+                            :categoryName="$article->category?->name"
+                            :secretRdvType="$article->secretRdvLabel()"
+                            :secretPhoto="$uSecret['photo'] ?? null"
+                            :secretAge="$uSecret['age'] ?? null"
                         />
                     @endforeach
                 </div>

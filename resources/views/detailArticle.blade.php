@@ -1,10 +1,13 @@
 @php
-    $authorName = $article->user?->name ?? 'Inconnu';
+    $authorUser = $article->user;
+    $userSecret = $authorUser?->secretProfile() ?? [];
+    $authorName = $authorUser?->name ?? 'Inconnu';
+    $secretName = $userSecret['alias'] ?? $authorName;
     $conditionLabel = $article->condition->label();
     $hash = abs(crc32((string) $article->slug));
     $indexNumber = sprintf('%02d', ($hash % 98) + 1);
     $affinity = 85 + ($hash % 14);
-    $age = 24 + ($hash % 12);
+    $age = $userSecret['age'] ?? (24 + ($hash % 12));
     $sealKey = 'card-' . $article->slug;
 
     $objectPhotos = [
@@ -38,15 +41,13 @@
     ];
 
     $objectImg = $objectPhotos[$hash % count($objectPhotos)];
-    $portraitImg = $secretPortraits[$hash % count($secretPortraits)];
+    $portraitImg = $userSecret['photo'] ?? $secretPortraits[$hash % count($secretPortraits)];
 
-    $secretIntention = match ($conditionLabel) {
-        'Neuf' => 'Souper Clandestin & Première Nuit',
-        'Très bon état' => 'Complicité Suivie & Discrète',
-        'Bon état' => 'Escapade Nocturne',
-        'Pour pièces' => 'Passion Sans Filtre',
-        default => 'Rencontre Confidentielle',
-    };
+    // Le Type de RDV recherché (remplace la Catégorie) & Le Créneau Nocturne (remplace le Prix)
+    $secretRdvType = $article->secretRdvLabel();
+    $nocturnalSlot = $article->secretHourLabel();
+    $secretBio = $userSecret['bio'] ?? null;
+    $secretPassphrase = $userSecret['passphrase'] ?? $article['title'];
 @endphp
 
 <x-layouts.public :title="$article['title'] . ' | UBERBITE / ARCHIVE'">
@@ -67,7 +68,7 @@
                 class="font-mono-tech inline-flex items-center gap-2 border px-4 py-2 text-[11px] font-bold uppercase tracking-[0.22em] transition"
             >
                 <span>←</span>
-                <span x-text="secretMode ? 'Retour aux Dossiers' : 'Retour à l\'Archive'">Retour à l'Archive</span>
+                <span x-text="secretMode ? 'Retour au Cadran' : 'Retour à l\'Archive'">Retour à l'Archive</span>
             </a>
 
             @if (auth()->check() && auth()->id() === $article->user_id)
@@ -104,7 +105,7 @@
                     class="h-full w-full object-cover"
                 >
                 <div class="absolute left-4 top-4 bg-white/95 px-3 py-1.5 font-mono-tech text-[10px] font-bold uppercase tracking-widest text-[#111111]">
-                    LOT N° {{ $indexNumber }} — ARCHIVE CERTIFIÉE
+                    LOT N° {{ $indexNumber }} — {{ strtoupper($article->category?->name ?? 'ARCHIVE') }}
                 </div>
             </div>
 
@@ -149,7 +150,7 @@
         </article>
 
         {{-- ======================================================================= --}}
-        {{-- VUE 2 : MAISON VESPER — HAUTE COUTURE NOIR & BRONZE CHAMPAGNE           --}}
+        {{-- VUE 2 : MAISON VESPER — PROFIL SECRET, TYPE DE RDV & CRÉNEAU NOCTURNE   --}}
         {{-- ======================================================================= --}}
         <article
             x-cloak
@@ -160,7 +161,7 @@
             <div class="relative min-h-[460px] border-b border-[#C5A47E]/20 bg-black lg:col-span-5 lg:border-b-0 lg:border-r">
                 <img
                     src="{{ $portraitImg }}"
-                    alt="Portrait de {{ $authorName }}"
+                    alt="Portrait de {{ $secretName }}"
                     :class="isUnsealed('{{ $sealKey }}')
                         ? 'grayscale-0 blur-0 scale-100 brightness-95'
                         : 'grayscale contrast-125 blur-lg scale-110 brightness-50'"
@@ -200,7 +201,7 @@
                         </div>
                     </button>
                     <p class="font-mono-tech mt-4 max-w-xs text-[10px] uppercase tracking-[0.25em] text-[#C5A47E]">
-                        MAINTENIR 1,2S POUR DESCELLER LE PORTRAIT DE {{ strtoupper($authorName) }}
+                        MAINTENIR 1,2S POUR DESCELLER LE PORTRAIT DE {{ strtoupper($secretName) }}
                     </p>
                 </div>
 
@@ -208,8 +209,8 @@
                 <div class="absolute bottom-4 left-4 right-4 border border-[#C5A47E]/30 bg-[#08080A]/90 p-4 backdrop-blur-md">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h2 class="font-serif-luxury text-3xl font-normal italic text-white">{{ $authorName }}, {{ $age }}</h2>
-                            <p class="font-mono-tech mt-0.5 text-[10px] uppercase tracking-[0.2em] text-[#C5A47E]">{{ $article->city ?? 'Toulouse' }} • {{ $secretIntention }}</p>
+                            <h2 class="font-serif-luxury text-3xl font-normal italic text-white">{{ $secretName }}, {{ $age }}</h2>
+                            <p class="font-mono-tech mt-0.5 text-[10px] uppercase tracking-[0.2em] text-[#C5A47E]">📍 {{ $article->city ?? ($userSecret['district'] ?? 'Toulouse') }}</p>
                         </div>
                         <span class="border border-[#C5A47E]/40 bg-[#C5A47E]/10 px-3 py-1 font-mono-tech text-xs font-bold text-[#C5A47E]">
                             {{ $affinity }}%
@@ -218,7 +219,7 @@
                 </div>
             </div>
 
-            {{-- Colonne droite : Décodage du Prétexte & Proposition de Rendez-vous (7 cols) --}}
+            {{-- Colonne droite : Type de RDV, Créneau Nocturne, Bio Secrète & Invitation (7 cols) --}}
             <div class="flex flex-col justify-between p-8 sm:p-12 lg:col-span-7">
                 <div>
                     <div class="flex items-center justify-between border-b border-[#C5A47E]/20 pb-3 font-mono-tech text-[10px] uppercase tracking-[0.28em] text-[#C5A47E]">
@@ -226,24 +227,43 @@
                         <span>PROTOCOLE VESPER</span>
                     </div>
 
-                    <div class="mt-6 border border-[#C5A47E]/20 bg-[#070709] p-5">
-                        <p class="font-mono-tech text-[9px] uppercase tracking-[0.28em] text-neutral-500">
-                            PRÉTEXTE DE COUVERTURE : « {{ $article['title'] }} »
-                        </p>
+                    {{-- Type de RDV recherché (remplace la Catégorie) & Créneau Nocturne (remplace le Prix €) --}}
+                    <div class="mt-5 grid gap-4 sm:grid-cols-2">
+                        <div class="border border-[#C5A47E]/30 bg-[#070709] p-4">
+                            <p class="font-mono-tech text-[9px] uppercase tracking-[0.25em] text-neutral-500">TYPE DE RENDEZ-VOUS RECHERCHÉ</p>
+                            <p class="font-serif-luxury mt-1 text-xl italic text-[#C5A47E]">{{ $secretRdvType }}</p>
+                        </div>
+                        <div class="border border-[#C5A47E]/30 bg-[#070709] p-4">
+                            <p class="font-mono-tech text-[9px] uppercase tracking-[0.25em] text-neutral-500">CRÉNEAU & DEGRÉ DE LA NUIT</p>
+                            <p class="font-serif-luxury mt-1 text-xl italic text-[#EAE6DF]">{{ $nocturnalSlot }}</p>
+                        </div>
+                    </div>
+
+                    {{-- Confession / Bio du profil secret + Mot-code de couverture --}}
+                    <div class="mt-4 border border-[#C5A47E]/20 bg-[#070709] p-5">
+                        <div class="flex flex-wrap items-center justify-between gap-2 font-mono-tech text-[9px] uppercase tracking-[0.25em] text-neutral-500">
+                            <span>MOT-CODE DE COUVERTURE : <strong class="text-[#C5A47E]">« {{ $article['title'] }} »</strong></span>
+                            <span>PHRASE CLEF : « {{ Str::limit($secretPassphrase, 38) }} »</span>
+                        </div>
+
                         <p class="font-serif-luxury mt-3 text-lg italic leading-relaxed text-[#EAE6DF]">
                             « {{ $article['description'] }} »
                         </p>
+
+                        @if ($secretBio)
+                            <div class="mt-3 border-t border-[#C5A47E]/15 pt-3">
+                                <p class="font-mono-tech text-[9px] uppercase tracking-widest text-[#C5A47E]">PORTRAIT INTIME DE {{ strtoupper($secretName) }}</p>
+                                <p class="mt-1 text-xs leading-relaxed text-neutral-300">{{ $secretBio }}</p>
+                            </div>
+                        @endif
                     </div>
 
-                    <div class="mt-8">
+                    <div class="mt-7">
                         <h3 class="font-serif-luxury text-3xl font-normal italic text-white">
-                            Initier un Rendez-vous Privé
+                            Proposer un Rendez-vous à {{ $secretName }}
                         </h3>
-                        <p class="mt-1 text-xs text-neutral-400">
-                            Sélectionnez le cadre de la rencontre et transmettez votre mot-code à {{ $authorName }}.
-                        </p>
 
-                        <div class="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                        <div class="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
                             <button
                                 type="button"
                                 @click="rdvSpot = 'Club de Jazz & Speakeasy'"
@@ -258,28 +278,28 @@
                             >II. Table Secrète</button>
                             <button
                                 type="button"
-                                @click="rdvSpot = 'Quais de Minuit'"
-                                :class="rdvSpot === 'Quais de Minuit' ? 'border-[#C5A47E] bg-[#C5A47E] text-[#08080A]' : 'border-[#C5A47E]/25 bg-[#070709] text-neutral-300'"
+                                @click="rdvSpot = 'Suite & Heure Tardive'"
+                                :class="rdvSpot === 'Suite & Heure Tardive' ? 'border-[#C5A47E] bg-[#C5A47E] text-[#08080A]' : 'border-[#C5A47E]/25 bg-[#070709] text-neutral-300'"
                                 class="border px-3 py-2.5 font-mono-tech text-[10px] font-bold uppercase tracking-widest transition"
                             >III. Heure Tardive</button>
                         </div>
 
                         <textarea
-                            rows="3"
+                            rows="2"
                             x-model="rdvNote"
-                            placeholder="Votre message confidentiel en mentionnant « {{ $article['title'] }} »..."
-                            class="mt-4 block w-full border border-[#C5A47E]/30 bg-[#070709] px-4 py-3 text-sm text-[#EAE6DF] placeholder:text-neutral-600 focus:border-[#C5A47E] focus:outline-none"
+                            placeholder="Votre message confidentiel en mentionnant le code « {{ $article['title'] }} »..."
+                            class="mt-3 block w-full border border-[#C5A47E]/30 bg-[#070709] px-4 py-3 text-sm text-[#EAE6DF] placeholder:text-neutral-600 focus:border-[#C5A47E] focus:outline-none"
                         ></textarea>
                     </div>
                 </div>
 
-                <div class="mt-6">
+                <div class="mt-5">
                     <button
                         type="button"
-                        @click="invitationSent = true; breakSeal('{{ $sealKey }}')"
+                        @click="if (attemptRendezVous('{{ addslashes($secretName) }}')) { invitationSent = true; breakSeal('{{ $sealKey }}'); }"
                         class="w-full bg-[#C5A47E] px-6 py-4 font-mono-tech text-[11px] font-bold uppercase tracking-[0.25em] text-[#08080A] transition hover:bg-[#D8BC98]"
                     >
-                        Sceller & Transmettre l'Invitation →
+                        <span x-text="(!freeRdvUsed && subscriptionTier === 'free') ? '🎁 Sceller & Envoyer (1er Rendez-vous Offert) →' : 'Sceller & Transmettre l\'Invitation →'"></span>
                     </button>
 
                     <div
@@ -288,7 +308,7 @@
                         x-transition
                         class="mt-4 border border-[#C5A47E]/40 bg-[#121116] p-4 text-xs text-[#EAE6DF]"
                     >
-                        ✓ <strong>Portrait descellé et invitation transmise à {{ $authorName }}</strong> (<span class="text-[#C5A47E]" x-text="rdvSpot"></span>). Retrouvez votre échange dans <a href="{{ route('dashboard') }}" class="font-bold text-[#C5A47E] underline">La Loge</a>.
+                        ✓ <strong>Portrait descellé et invitation transmise à {{ $secretName }}</strong> (<span class="text-[#C5A47E]" x-text="rdvSpot"></span>). Retrouvez votre échange dans <a href="{{ route('dashboard') }}" class="font-bold text-[#C5A47E] underline">La Loge</a>.
                     </div>
                 </div>
             </div>

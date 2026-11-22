@@ -1,43 +1,51 @@
 @php
-    $secretPortraitsPool = [
+    $femalePortraitsPool = [
         'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=85',
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1000&q=85',
         'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1000&q=85',
-        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1000&q=85',
         'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1000&q=85',
-        'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1000&q=85',
         'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=1000&q=85',
-        'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=1000&q=85',
         'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=85',
-        'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=1000&q=85',
         'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=1000&q=85',
+    ];
+
+    $malePortraitsPool = [
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1000&q=85',
+        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1000&q=85',
+        'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1000&q=85',
+        'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=1000&q=85',
+        'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=1000&q=85',
         'https://images.unsplash.com/photo-1463453091185-61582044d556?auto=format&fit=crop&w=1000&q=85',
     ];
 
-    $wheelCatalogItems = $articles->getCollection()->values()->map(function ($art, $idx) use ($secretPortraitsPool) {
-        $h = abs(crc32((string) $art->slug));
-        $cond = $art->condition->label();
-        return [
-            'id' => 'card-' . $art->slug,
-            'num' => sprintf('%02d', $idx + 1),
-            'slug' => $art->slug,
-            'codeObject' => $art->title,
-            'confession' => '« ' . Str::limit($art->description, 130) . ' »',
-            'district' => $art->city ?? 'Toulouse',
-            'name' => $art->user?->name ?? 'Membre Initié',
-            'age' => 24 + ($h % 11),
-            'affinity' => 85 + ($h % 14),
-            'photo' => $secretPortraitsPool[$idx % count($secretPortraitsPool)],
-            'intention' => match ($cond) {
-                'Neuf' => 'Souper Clandestin & Première Nuit',
-                'Très bon état' => 'Complicité Suivie & Discrète',
-                'Bon état' => 'Escapade Nocturne',
-                'Pour pièces' => 'Passion Sans Filtre',
-                default => 'Rencontre Confidentielle',
-            },
-            'url' => route('annonce', ['listing' => $art->slug]),
-        ];
-    });
+    $currentUserId = auth()->id();
+
+    // On exclut strictement les propres annonces de l'utilisateur connecté dans la Roue
+    $wheelCatalogItems = $articles->getCollection()
+        ->filter(fn ($art) => ! $currentUserId || (int) $art->user_id !== (int) $currentUserId)
+        ->values()
+        ->map(function ($art, $idx) use ($femalePortraitsPool, $malePortraitsPool) {
+            $h = abs(crc32((string) $art->slug));
+            $userSecret = $art->user?->secretProfile() ?? [];
+            $gender = $userSecret['gender'] ?? (($idx % 2 === 0) ? 'femme' : 'homme');
+            $pool = $gender === 'femme' ? $femalePortraitsPool : $malePortraitsPool;
+
+            return [
+                'id' => 'card-' . $art->slug,
+                'num' => sprintf('%02d', $idx + 1),
+                'slug' => $art->slug,
+                'gender' => $gender,
+                'codeObject' => $art->title,
+                'confession' => '« ' . Str::limit($userSecret['bio'] ?? $art->description, 130) . ' »',
+                'district' => $art->city ?: ($userSecret['district'] ?? 'Toulouse'),
+                'name' => $userSecret['alias'] ?? ($art->user?->name ?? 'Membre Initié'),
+                'age' => $userSecret['age'] ?? (24 + ($h % 11)),
+                'affinity' => 85 + ($h % 14),
+                'photo' => $pool[$idx % count($pool)],
+                'intention' => $art->secretRdvLabel(),
+                'nocturnalSlot' => $art->secretHourLabel(),
+                'url' => route('annonce', ['listing' => $art->slug]),
+            ];
+        });
 @endphp
 
 <x-layouts.public title="Catalogue | UBERBITE / ARCHIVE">
@@ -49,7 +57,13 @@
             isDraggingWheel: false,
             dragStartAngle: 0,
             wheelStartAngle: 0,
-            catalogItems: {{ Js::from($wheelCatalogItems) }},
+            allCatalogItems: {{ Js::from($wheelCatalogItems) }},
+
+            // Filtrage dynamique selon l'orientation choisie dans le questionnaire
+            get catalogItems() {
+                const filtered = this.allCatalogItems.filter(p => this.matchesUserSeeking(p.gender));
+                return filtered.length ? filtered : this.allCatalogItems;
+            },
 
             get activeIndex() {
                 const count = this.catalogItems.length || 1;
@@ -109,13 +123,22 @@
                 const step = 360 / count;
                 const totalDeg = (idx * step) + this.wheelAngle - 90;
                 const rad = totalDeg * (Math.PI / 180);
-                const radius = 190;
+
+                const isEjected = this.assemblyStage >= 3;
+                const radius = isEjected ? 190 : 0;
                 const x = Math.cos(rad) * radius;
                 const y = Math.sin(rad) * radius;
                 const isSelected = idx === this.activeIndex;
-                const scale = isSelected ? 1.24 : 0.82;
+                const scale = !isEjected ? 0.1 : (isSelected ? 1.24 : 0.82);
+                const opacity = isEjected ? 1 : 0;
                 const zIndex = isSelected ? 30 : 10;
-                return `transform: translate(calc(-50% + ${x.toFixed(1)}px), calc(-50% + ${y.toFixed(1)}px)) scale(${scale}); z-index: ${zIndex};`;
+
+                const staggerDelay = (this.assemblyStage === 3 || this.assemblyStage === 4) ? `${idx * 90}ms` : '0ms';
+                const transitionCurve = this.isDraggingWheel
+                    ? 'none'
+                    : `transform 0.65s cubic-bezier(0.34, 1.42, 0.64, 1) ${staggerDelay}, opacity 0.45s ease ${staggerDelay}`;
+
+                return `transform: translate(calc(-50% + ${x.toFixed(1)}px), calc(-50% + ${y.toFixed(1)}px)) scale(${scale}); opacity: ${opacity}; z-index: ${zIndex}; transition: ${transitionCurve};`;
             }
         }"
         @mousemove.window="moveWheelDrag($event)"
@@ -138,7 +161,7 @@
                         class="font-mono-tech inline-flex items-center gap-2 border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.28em]"
                     >
                         <span class="h-1.5 w-1.5 rounded-full" :class="secretMode ? 'bg-[#C5A47E]' : 'bg-[#111111]'"></span>
-                        <span x-text="secretMode ? 'MAISON VESPER — ROUE DES DOSSIERS' : 'INDEX GÉNÉRAL — CATALOGUE'"></span>
+                        <span x-text="secretMode ? 'FILTRE D\'ORIENTATION : ' + seekingLabel() + ' • VOS ANNONCES SONT MASQUÉES' : 'INDEX GÉNÉRAL — CATALOGUE'"></span>
                     </span>
 
                     <h1
@@ -178,21 +201,21 @@
         </div>
 
         <section class="py-6" aria-labelledby="annonces-title">
-            {{-- Barre de filtres --}}
+            {{-- BARRE DE FILTRES --}}
             <form
                 method="GET"
                 action="{{ url()->current() }}"
                 :class="secretMode
                     ? 'border border-[#C5A47E]/25 bg-[#0C0C0F]'
                     : 'border border-[#DFDDD4] bg-white'"
-                class="mb-8 grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_0.8fr_auto]"
+                class="mb-8 grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_auto]"
             >
                 <div class="min-w-0">
                     <label
                         for="listing-search"
                         :class="secretMode ? 'text-[#C5A47E]' : 'text-neutral-500'"
                         class="font-mono-tech mb-1.5 block text-[10px] font-bold uppercase tracking-[0.2em]"
-                        x-text="secretMode ? '01 / MOT-CODE OU MEMBRE' : '01 / RECHERCHE'"
+                        x-text="secretMode ? '01 / MOT-CODE DE COUVERTURE' : '01 / RECHERCHE'"
                     >01 / RECHERCHE</label>
                     <input
                         id="listing-search"
@@ -212,8 +235,8 @@
                         for="listing-category"
                         :class="secretMode ? 'text-[#C5A47E]' : 'text-neutral-500'"
                         class="font-mono-tech mb-1.5 block text-[10px] font-bold uppercase tracking-[0.2em]"
-                        x-text="secretMode ? '02 / CERCLE D\'AFFINITÉ' : '02 / TYPOLOGIE'"
-                    >02 / TYPOLOGIE</label>
+                        x-text="secretMode ? '02 / TYPE DE RENDEZ-VOUS RECHERCHÉ' : '02 / CATÉGORIE'"
+                    >02 / CATÉGORIE</label>
                     <select
                         id="listing-category"
                         name="category"
@@ -222,37 +245,52 @@
                             : 'border-[#DFDDD4] bg-[#F6F5F0] text-[#111111] focus:border-[#111111]'"
                         class="w-full border px-4 py-2.5 text-sm focus:outline-none"
                     >
-                        <option value="">Toutes les catégories</option>
+                        <option value="" x-text="secretMode ? 'Tous les types de rendez-vous' : 'Toutes les catégories'">Toutes les catégories</option>
                         @foreach ($categories as $category)
-                            <option value="{{ $category->slug }}" @selected(request('category') === $category->slug)>
+                            <option
+                                value="{{ $category->slug }}"
+                                @selected(request('category') === $category->slug)
+                                x-text="secretMode ? '{{ addslashes($category->secretRdvType()) }}' : '{{ addslashes($category->name) }}'"
+                            >
                                 {{ $category->name }}
                             </option>
                         @endforeach
                     </select>
                 </div>
 
-                <div class="min-w-0">
+                <div class="min-w-0" x-data="{ priceVal: '{{ request('max_price') }}' }">
                     <label
                         for="listing-max-price"
                         :class="secretMode ? 'text-[#C5A47E]' : 'text-neutral-500'"
                         class="font-mono-tech mb-1.5 block text-[10px] font-bold uppercase tracking-[0.2em]"
-                        x-text="secretMode ? '03 / INDICE MAX' : '03 / BUDGET MAX'"
-                    >03 / BUDGET MAX</label>
-                    <div class="relative">
+                        x-text="secretMode ? '03 / CRÉNEAU & DEGRÉ DE LA NUIT' : '03 / BUDGET MAX (€)'"
+                    >03 / BUDGET MAX (€)</label>
+
+                    <div x-show="!secretMode" class="relative">
                         <input
                             id="listing-max-price"
                             type="number"
                             name="max_price"
                             min="0"
                             step="0.01"
-                            value="{{ request('max_price') }}"
+                            x-model="priceVal"
                             placeholder="Sans limite"
-                            :class="secretMode
-                                ? 'border-[#C5A47E]/25 bg-[#08080A] text-[#EAE6DF] placeholder:text-neutral-600 focus:border-[#C5A47E]'
-                                : 'border-[#DFDDD4] bg-[#F6F5F0] text-[#111111] placeholder:text-neutral-400 focus:border-[#111111]'"
-                            class="w-full border px-4 py-2.5 pr-9 text-sm focus:outline-none"
+                            class="w-full border border-[#DFDDD4] bg-[#F6F5F0] px-4 py-2.5 pr-9 text-sm text-[#111111] placeholder:text-neutral-400 focus:border-[#111111] focus:outline-none"
                         >
                         <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center font-mono-tech text-xs text-neutral-500">€</span>
+                    </div>
+
+                    <div x-cloak x-show="secretMode">
+                        <select
+                            @change="priceVal = $event.target.value"
+                            class="w-full border border-[#C5A47E]/25 bg-[#08080A] px-4 py-2.5 text-sm text-[#EAE6DF] focus:border-[#C5A47E] focus:outline-none"
+                        >
+                            <option value="" :selected="!priceVal">Toutes les heures de la nuit</option>
+                            <option value="50" :selected="priceVal == '50'">21h00 • Premier Verre Feutré (Degré I)</option>
+                            <option value="150" :selected="priceVal == '150'">22h30 • Souper aux Chandelles (Degré II)</option>
+                            <option value="400" :selected="priceVal == '400'">23h45 • Confidences de Minuit (Degré III)</option>
+                            <option value="5000" :selected="priceVal == '5000'">01h15 • Nuit Blanche & Aube (Degré IV)</option>
+                        </select>
                     </div>
                 </div>
 
@@ -289,7 +327,6 @@
                 @wheel.prevent="onWheelSpin($event)"
                 class="grid border border-[#C5A47E]/30 bg-[#070709] lg:grid-cols-12"
             >
-                {{-- Cadran Rotatif (7 cols) --}}
                 <div class="relative flex flex-col items-center justify-center overflow-hidden border-b border-[#C5A47E]/20 p-6 lg:col-span-7 lg:border-b-0 lg:border-r">
                     <div class="pointer-events-none mb-2 flex flex-col items-center">
                         <span class="font-mono-tech text-[9px] uppercase tracking-[0.35em] text-[#C5A47E]">VISEUR • 12H</span>
@@ -311,7 +348,11 @@
 
                         {{-- Moyeu central : Sceau de Bronze --}}
                         <template x-if="activeItem">
-                            <div class="relative z-20 flex flex-col items-center justify-center text-center">
+                            <div
+                                x-show="assemblyStage >= 1"
+                                :class="assemblyStage === 1 ? 'vault-hub-spin' : ''"
+                                class="relative z-20 flex flex-col items-center justify-center text-center"
+                            >
                                 <button
                                     type="button"
                                     @mousedown.prevent.stop="startHoldSeal(activeItem.id, $event)"
@@ -333,7 +374,7 @@
                                             :stroke-dashoffset="holdingId === activeItem.id ? 289 - (289 * holdProgress / 100) : (isUnsealed(activeItem.id) ? 0 : 289)"
                                         />
                                     </svg>
-                                    <span class="font-mono-tech text-[9px] uppercase tracking-widest text-neutral-400" x-text="'LOT ' + activeItem.num"></span>
+                                    <span class="font-mono-tech text-[9px] uppercase tracking-widest text-neutral-400" x-text="'LOT 0' + (activeIndex + 1)"></span>
                                     <span class="font-serif-luxury text-2xl italic text-[#EAE6DF]" x-text="activeItem.name.split(' ')[0]"></span>
                                     <span
                                         class="font-mono-tech mt-0.5 text-[8px] uppercase tracking-widest text-[#C5A47E]"
@@ -343,11 +384,11 @@
                             </div>
                         </template>
 
-                        {{-- Médaillons en orbite --}}
+                        {{-- Médaillons en orbite (Filtrés selon orientation + sans ses propres annonces) --}}
                         <template x-for="(item, idx) in catalogItems" :key="item.id">
                             <div
                                 @click.stop="snapToIndex(idx)"
-                                :style="getNodeStyle(idx) + (isDraggingWheel ? ' transition: none;' : ' transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);')"
+                                :style="getNodeStyle(idx)"
                                 class="group absolute left-1/2 top-1/2 cursor-pointer"
                             >
                                 <div
@@ -364,7 +405,7 @@
                                     >
                                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                                     <div class="absolute bottom-1 inset-x-0 text-center">
-                                        <span class="font-mono-tech text-[8px] font-bold text-[#EAE6DF]" x-text="item.num"></span>
+                                        <span class="font-mono-tech text-[8px] font-bold text-[#EAE6DF]" x-text="'0' + (idx + 1)"></span>
                                     </div>
                                 </div>
                             </div>
@@ -391,17 +432,20 @@
                         <div class="flex h-full flex-col justify-between">
                             <div>
                                 <div class="flex items-center justify-between border-b border-[#C5A47E]/20 pb-3 font-mono-tech text-[10px] text-[#C5A47E]">
-                                    <span x-text="'DOSSIER N° ' + activeItem.num + ' / ' + catalogItems.length"></span>
-                                    <span x-text="activeItem.affinity + '% AFFINITÉ'"></span>
+                                    <span x-text="'DOSSIER N° 0' + (activeIndex + 1) + ' / ' + catalogItems.length"></span>
+                                    <span x-text="'✓ PROFIL VÉRIFIÉ • ' + activeItem.affinity + '% AFFINITÉ'"></span>
                                 </div>
 
-                                <div class="relative mt-4 h-56 w-full overflow-hidden border border-[#C5A47E]/25 bg-black">
+                                <div class="relative mt-4 h-52 w-full overflow-hidden border border-[#C5A47E]/25 bg-black">
                                     <img
                                         :src="activeItem.photo"
                                         :alt="activeItem.name"
                                         :class="isUnsealed(activeItem.id) ? 'grayscale-0 blur-0' : 'grayscale contrast-125 blur-md brightness-50'"
                                         class="h-full w-full object-cover transition-all duration-1000"
                                     >
+                                    <div class="absolute right-3 top-3 border border-[#C5A47E]/40 bg-[#08080A]/90 px-2.5 py-1 font-mono-tech text-[9px] uppercase tracking-wider text-[#C5A47E]">
+                                        <span x-text="activeItem.nocturnalSlot"></span>
+                                    </div>
                                     <div
                                         x-show="!isUnsealed(activeItem.id)"
                                         class="absolute inset-0 flex items-center justify-center bg-black/45 p-4 text-center"
@@ -417,23 +461,35 @@
                                     </div>
                                 </div>
 
-                                <h3 class="font-serif-luxury mt-5 text-3xl italic text-white" x-text="activeItem.name + ', ' + activeItem.age"></h3>
-                                <p class="font-mono-tech mt-1 text-[10px] uppercase tracking-[0.22em] text-[#C5A47E]" x-text="activeItem.district + ' • ' + activeItem.intention"></p>
+                                <h3 class="font-serif-luxury mt-4 text-3xl italic text-white" x-text="activeItem.name + ', ' + activeItem.age"></h3>
+                                <p class="font-mono-tech mt-0.5 text-[10px] uppercase tracking-[0.22em] text-neutral-400" x-text="'📍 ' + activeItem.district"></p>
 
-                                <div class="mt-4 border border-[#C5A47E]/20 bg-[#08080A] p-4">
+                                <div class="mt-3 grid grid-cols-2 gap-2.5">
+                                    <div class="border border-[#C5A47E]/20 bg-[#08080A] p-3">
+                                        <p class="font-mono-tech text-[8px] uppercase tracking-[0.22em] text-neutral-500">TYPE DE RDV RECHERCHÉ</p>
+                                        <p class="mt-1 text-xs font-bold text-[#C5A47E]" x-text="activeItem.intention"></p>
+                                    </div>
+                                    <div class="border border-[#C5A47E]/20 bg-[#08080A] p-3">
+                                        <p class="font-mono-tech text-[8px] uppercase tracking-[0.22em] text-neutral-500">CRÉNEAU & DEGRÉ</p>
+                                        <p class="mt-1 text-xs font-bold text-[#EAE6DF]" x-text="activeItem.nocturnalSlot"></p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3 border border-[#C5A47E]/20 bg-[#08080A] p-3.5">
                                     <p class="font-mono-tech text-[9px] uppercase tracking-[0.25em] text-neutral-500">
-                                        OBJET DE COUVERTURE : <span class="text-[#C5A47E]" x-text="activeItem.codeObject"></span>
+                                        MOT-CODE : <span class="text-[#C5A47E]" x-text="activeItem.codeObject"></span>
                                     </p>
-                                    <p class="font-serif-luxury mt-2 text-base italic leading-relaxed text-[#EAE6DF]" x-text="activeItem.confession"></p>
+                                    <p class="font-serif-luxury mt-1.5 text-sm italic leading-relaxed text-[#EAE6DF]" x-text="activeItem.confession"></p>
                                 </div>
                             </div>
 
-                            <a
-                                :href="activeItem.url"
-                                class="mt-6 flex w-full items-center justify-center bg-[#C5A47E] px-5 py-3.5 font-mono-tech text-[11px] font-bold uppercase tracking-[0.22em] text-[#08080A] transition hover:bg-[#D8BC98]"
+                            <button
+                                type="button"
+                                @click="attemptRendezVous(activeItem.name, activeItem.url)"
+                                class="mt-4 flex w-full items-center justify-center bg-[#C5A47E] px-5 py-3.5 font-mono-tech text-[11px] font-bold uppercase tracking-[0.22em] text-[#08080A] transition hover:bg-[#D8BC98]"
                             >
-                                Ouvrir le Dossier & Proposer un RDV →
-                            </a>
+                                <span x-text="(!freeRdvUsed && subscriptionTier === 'free') ? '🎁 Ouvrir avec mon 1er RDV Offert →' : 'Ouvrir le Dossier & Proposer un RDV →'"></span>
+                            </button>
                         </div>
                     </template>
                 </div>
@@ -446,15 +502,28 @@
                 x-show="!secretMode || secretLayout === 'matrice'"
                 class="grid gap-7 md:grid-cols-2 lg:grid-cols-3"
             >
-                @foreach ($articles as $article)
-                    <x-article
-                        :slug="$article['slug']"
-                        :title="$article['title']"
-                        :description="$article['description']"
-                        :condition="$article->condition->Label()"
-                        :price="$article['price']"
-                        :author="$article->user?->name ?? 'Inconnu'"
-                    />
+                @foreach ($articles as $idx => $article)
+                    @php
+                        $uSecret = $article->user?->secretProfile() ?? [];
+                        $cardGender = $uSecret['gender'] ?? (($idx % 2 === 0) ? 'femme' : 'homme');
+                        $cardPool = $cardGender === 'femme' ? $femalePortraitsPool : $malePortraitsPool;
+                        $cardPhoto = $cardPool[$idx % count($cardPool)];
+                        $isOwnArticle = $currentUserId && (int) $article->user_id === (int) $currentUserId;
+                    @endphp
+                    <div x-show="!secretMode || (!{{ $isOwnArticle ? 'true' : 'false' }} && matchesUserSeeking('{{ $cardGender }}'))">
+                        <x-article
+                            :slug="$article['slug']"
+                            :title="$article['title']"
+                            :description="$article['description']"
+                            :condition="$article->condition->Label()"
+                            :price="$article['price']"
+                            :author="$uSecret['alias'] ?? ($article->user?->name ?? 'Inconnu')"
+                            :categoryName="$article->category?->name"
+                            :secretRdvType="$article->secretRdvLabel()"
+                            :secretPhoto="$cardPhoto"
+                            :secretAge="$uSecret['age'] ?? null"
+                        />
+                    </div>
                 @endforeach
             </div>
 
