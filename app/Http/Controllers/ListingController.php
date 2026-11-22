@@ -18,7 +18,7 @@ class ListingController extends Controller
 {
     public function mesAnnonces(Request $request, string $user_name): View
     {
-        // $user = auth()->user(); // securité deja presente dans le middleware donc pas besoin
+        $user = auth()->user();
 
         if ($user->name !== $user_name) {
             abort(403);

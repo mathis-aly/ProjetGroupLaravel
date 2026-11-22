@@ -1,51 +1,68 @@
-<x-layouts.public title="Mes annonces | Uberbite(Coin)">
+<x-layouts.public title="Mes Annonces | UBERBITE / ARCHIVE">
 
-    <div class="bg-amber-100 text-white">
-        <div class="relative mx-auto mt-8 w-[calc(100%-2rem)] max-w-7xl overflow-hidden rounded-3xl bg-teal-900 px-6 py-12 text-center shadow-xl shadow-teal-900/10 sm:mt-12 sm:px-10 sm:py-16">
-            <span class="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-100/20 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber-100">
-                <span class="h-2 w-2 rounded-full bg-amber-400"></span>
-                Votre espace
-            </span>
-
-            <h1 class="text-5xl font-extrabold tracking-tight text-white sm:text-7xl">
-                Mes annonces
-            </h1>
-
-            <p class="mx-auto mt-4 max-w-xl text-base leading-7 text-amber-100/80 sm:text-lg">
-                Retrouvez ici les articles que vous avez publiés et gérez votre vitrine en un clin d’œil.
-            </p>
-
-            <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
-                <a href="{{ route('listings.create') }}" class="inline-flex items-center justify-center rounded-xl bg-amber-400 px-5 py-3 text-sm font-bold text-teal-950 transition hover:bg-amber-300">
-                    Déposer une annonce
-                </a>
-                <a href="{{ route('annonces') }}" class="inline-flex items-center justify-center rounded-xl border border-white/20 px-5 py-3 text-sm font-bold text-white transition hover:border-amber-400 hover:text-amber-400">
-                    Voir toutes les annonces
-                </a>
-            </div>
-
-            <span class="absolute -right-10 -top-14 h-40 w-40 rounded-full border border-white/10" aria-hidden="true"></span>
-            <span class="absolute -bottom-24 -left-8 h-48 w-48 rounded-full border border-amber-400/20" aria-hidden="true"></span>
-        </div>
-
-        <section class="mx-auto min-h-[65vh] max-w-7xl px-6 py-10" aria-labelledby="mes-annonces-title">
-            <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div class="mx-auto max-w-7xl px-6 py-10">
+        {{-- En-tête Swiss Editorial (Façade) vs Speakeasy (Secret) --}}
+        <div
+            :class="secretMode
+                ? 'rounded-3xl border border-rose-500/35 bg-gradient-to-br from-[#23061C] via-[#13030F] to-[#080106] text-rose-50 shadow-2xl shadow-rose-950/60'
+                : 'border border-[#DFDDD4] bg-white text-[#111111]'"
+            class="relative overflow-hidden px-6 py-12 sm:px-12 sm:py-16 transition-all duration-700"
+        >
+            <div class="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
                 <div>
-                    <p class="text-sm font-bold uppercase tracking-[0.18em] text-teal-700">Votre liste</p>
-                    <h2 id="mes-annonces-title" class="mt-2 text-3xl font-extrabold tracking-tight text-teal-900 sm:text-4xl">
-                        Vos annonces publiées
-                    </h2>
+                    <span
+                        :class="secretMode ? 'border-rose-400/40 bg-rose-500/15 text-rose-200 rounded-full' : 'border-[#111111] text-[#111111]'"
+                        class="font-mono-tech inline-flex items-center gap-2 border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.25em]"
+                    >
+                        <span class="h-1.5 w-1.5 rounded-full" :class="secretMode ? 'bg-rose-400 animate-pulse' : 'bg-[#111111]'"></span>
+                        <span x-text="secretMode ? 'VOS SIGNAUX CODÉS' : 'INVENTAIRE PERSONNEL'"></span>
+                    </span>
+
+                    <h1
+                        data-cipher-facade="Mes Pièces Publiées"
+                        data-cipher-secret="Mes Prétextes de Rendez-vous"
+                        :class="secretMode ? 'italic text-rose-50' : 'text-[#111111]'"
+                        class="font-serif-luxury mt-4 text-5xl font-bold tracking-tight sm:text-6xl"
+                    >
+                        Mes Pièces Publiées
+                    </h1>
                 </div>
 
+                <div class="flex flex-wrap items-center gap-3">
+                    <a
+                        href="{{ route('listings.create') }}"
+                        :class="secretMode
+                            ? 'rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white'
+                            : 'bg-[#111111] text-[#F6F5F0] hover:bg-neutral-800'"
+                        class="inline-flex items-center justify-center px-6 py-3.5 text-xs font-bold uppercase tracking-[0.18em] transition"
+                        x-text="secretMode ? '+ Lancer un Nouveau Signal' : '+ Déposer une Pièce'"
+                    >
+                        + Déposer une Pièce
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <section class="min-h-[55vh] py-10" aria-labelledby="mes-annonces-title">
+            <div class="mb-8 flex items-center justify-between">
+                <p
+                    :class="secretMode ? 'text-rose-300' : 'text-neutral-500'"
+                    class="font-mono-tech text-xs font-bold uppercase tracking-widest"
+                    x-text="secretMode ? 'CARTES RETOURNÉES EN MODE RENCONTRE' : 'GRILLE D\'ARCHIVE PERSONNELLE'"
+                ></p>
+
                 @if ($articles->count() > 0)
-                    <span class="inline-flex items-center rounded-full border border-teal-900/15 bg-white px-3 py-1.5 text-sm font-bold text-teal-900 shadow-sm">
-                        {{ $articles->count() }} annonce{{ $articles->count() > 1 ? 's' : '' }}
+                    <span
+                        :class="secretMode ? 'border-rose-400/30 bg-rose-950/60 text-rose-200 rounded-full' : 'border-[#DFDDD4] bg-white text-[#111111]'"
+                        class="font-mono-tech border px-4 py-1.5 text-xs font-bold"
+                    >
+                        {{ $articles->count() }} PUBLICATION{{ $articles->count() > 1 ? 'S' : '' }}
                     </span>
                 @endif
             </div>
 
             @if ($articles->count() > 0)
-                <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div class="grid gap-7 md:grid-cols-2 lg:grid-cols-3">
                     @foreach ($articles as $article)
                         <x-article
                             :slug="$article['slug']"
@@ -58,16 +75,28 @@
                     @endforeach
                 </div>
             @else
-                <div class="rounded-3xl border border-dashed border-teal-900/20 bg-white/80 p-10 text-center shadow-lg shadow-teal-900/5">
-                    <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-3xl text-teal-900">
-                        🏷️
-                    </div>
-                    <h3 class="text-2xl font-extrabold tracking-tight text-teal-900">Aucune annonce pour le moment</h3>
-                    <p class="mx-auto mt-3 max-w-lg text-base leading-7 text-teal-900/70">
-                        Vous n’avez pas encore publié d’article. Créez votre première annonce pour commencer à vendre ou à donner à vos voisins.
-                    </p>
-                    <a href="{{ route('listings.create') }}" class="mt-6 inline-flex items-center justify-center rounded-xl bg-teal-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-teal-800">
-                        Publier une annonce
+                <div
+                    :class="secretMode ? 'rounded-3xl border-rose-400/25 bg-[#180514] text-rose-100' : 'border-[#DFDDD4] bg-white text-[#111111]'"
+                    class="border p-12 text-center"
+                >
+                    <h3
+                        class="font-serif-luxury text-3xl font-bold"
+                        x-text="secretMode ? 'Aucun signal secret actif' : 'Aucune pièce dans votre archive'"
+                    >Aucune pièce dans votre archive</h3>
+                    <p
+                        :class="secretMode ? 'text-rose-200/70' : 'text-neutral-600'"
+                        class="mx-auto mt-3 max-w-lg text-sm leading-7"
+                        x-text="secretMode
+                            ? 'Publiez une annonce de façade qui servira de mot de passe codé pour attirer vos premiers prétendants.'
+                            : 'Soumettez votre première pièce à l’archive UberBite.'"
+                    ></p>
+                    <a
+                        href="{{ route('listings.create') }}"
+                        :class="secretMode ? 'rounded-xl bg-rose-500 text-white' : 'bg-[#111111] text-[#F6F5F0]'"
+                        class="mt-6 inline-flex items-center justify-center px-6 py-3.5 text-xs font-bold uppercase tracking-[0.2em] transition"
+                        x-text="secretMode ? 'Publier mon premier code' : 'Déposer une annonce'"
+                    >
+                        Déposer une annonce
                     </a>
                 </div>
             @endif

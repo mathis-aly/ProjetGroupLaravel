@@ -1,38 +1,74 @@
 {{-- resources/views/listings/create.blade.php --}}
-<x-layouts.public title="Déposer une annonce">
+<x-layouts.public title="Déposer une pièce | UBERBITE / ARCHIVE">
     <div class="mx-auto w-full max-w-2xl px-6 py-10">
-        <div class="mb-6">
-            <h1 class="text-3xl font-extrabold tracking-tight text-teal-950">Déposer une annonce</h1>
-            <p class="mt-1 text-sm text-teal-800/80">Remplissez les informations ci-dessous pour publier votre annonce sur UberBite(Coin).</p>
+        <div class="mb-8">
+            <p
+                :class="secretMode ? 'text-rose-400' : 'text-neutral-500'"
+                class="font-mono-tech text-xs font-bold uppercase tracking-[0.25em]"
+                x-text="secretMode ? 'SIGNAL CODÉ DU CERCLE' : 'INDEXATION D\'UNE NOUVELLE PIÈCE'"
+            >INDEXATION D'UNE NOUVELLE PIÈCE</p>
+            <h1
+                :class="secretMode ? 'text-rose-50 italic' : 'text-[#111111]'"
+                class="font-serif-luxury mt-1 text-4xl font-bold tracking-tight sm:text-5xl"
+                x-text="secretMode ? 'Publier un Prétexte de Rendez-vous' : 'Déposer une Annonce'"
+            >Déposer une Annonce</h1>
+            <p
+                :class="secretMode ? 'text-rose-200/75' : 'text-neutral-600'"
+                class="mt-2 text-sm"
+                x-text="secretMode
+                    ? 'Rédigez une annonce qui semblera classique en façade, mais dont les initiés comprendront l’invitation.'
+                    : 'Renseignez les spécifications de votre objet pour l’intégrer à l’archive.'"
+            ></p>
         </div>
 
-        <form method="POST" action="{{ route('listings.store') }}" class="space-y-6 rounded-2xl border border-teal-900/10 bg-white/80 p-6 shadow-lg shadow-teal-900/5 sm:p-8">
+        <form
+            method="POST"
+            action="{{ route('listings.store') }}"
+            :class="secretMode
+                ? 'rounded-3xl border border-rose-400/30 bg-[#150411] text-rose-50 shadow-2xl shadow-rose-950/50'
+                : 'border border-[#DFDDD4] bg-white text-[#111111]'"
+            class="space-y-6 p-6 sm:p-10"
+        >
             @csrf
 
-            {{-- Titre --}}
             <div>
-                <label for="title" class="block text-sm font-bold text-teal-950">Titre de l'annonce</label>
+                <label
+                    for="title"
+                    :class="secretMode ? 'text-rose-300' : 'text-neutral-600'"
+                    class="font-mono-tech block text-[11px] font-bold uppercase tracking-wider"
+                    x-text="secretMode ? 'OBJET-CODE (TITRE VISIBLE EN FAÇADE)' : '01 / DÉSIGNATION DE L\'OBJET'"
+                >01 / DÉSIGNATION DE L'OBJET</label>
                 <input
                     id="title"
                     type="text"
                     name="title"
                     value="{{ old('title') }}"
-                    placeholder="Ex. Vélo de course 54 cm"
-                    class="mt-1.5 block w-full rounded-xl border border-teal-900/20 bg-white px-4 py-2.5 text-sm text-teal-950 placeholder-teal-900/40 shadow-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    placeholder="Ex. Montre chronographe vintage 1968"
+                    :class="secretMode
+                        ? 'rounded-xl border-rose-400/25 bg-[#0A0208] text-rose-100 placeholder:text-rose-300/35 focus:border-rose-400'
+                        : 'border-[#DFDDD4] bg-[#F6F5F0] text-[#111111] placeholder:text-neutral-400 focus:border-[#111111]'"
+                    class="mt-2 block w-full border px-4 py-3 text-sm focus:outline-none"
                 >
                 @error('title')
-                    <p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>
+                    <p class="mt-1.5 text-xs font-semibold text-red-500">{{ $message }}</p>
                 @enderror
             </div>
 
-            {{-- Catégorie & État (sur 2 colonnes sur écran moyen) --}}
             <div class="grid gap-6 sm:grid-cols-2">
                 <div>
-                    <label for="category_id" class="block text-sm font-bold text-teal-950">Catégorie</label>
+                    <label
+                        for="category_id"
+                        :class="secretMode ? 'text-rose-300' : 'text-neutral-600'"
+                        class="font-mono-tech block text-[11px] font-bold uppercase tracking-wider"
+                        x-text="secretMode ? 'UNIVERS D\'AFFINITÉ' : '02 / CATÉGORIE'"
+                    >02 / CATÉGORIE</label>
                     <select
                         id="category_id"
                         name="category_id"
-                        class="mt-1.5 block w-full rounded-xl border border-teal-900/20 bg-white px-4 py-2.5 text-sm text-teal-950 shadow-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        :class="secretMode
+                            ? 'rounded-xl border-rose-400/25 bg-[#0A0208] text-rose-100 focus:border-rose-400'
+                            : 'border-[#DFDDD4] bg-[#F6F5F0] text-[#111111] focus:border-[#111111]'"
+                        class="mt-2 block w-full border px-4 py-3 text-sm focus:outline-none"
                     >
                         <option value="">Choisir une catégorie</option>
                         @foreach ($categories as $category)
@@ -42,16 +78,24 @@
                         @endforeach
                     </select>
                     @error('category_id')
-                        <p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>
+                        <p class="mt-1.5 text-xs font-semibold text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div>
-                    <label for="condition" class="block text-sm font-bold text-teal-950">État</label>
+                    <label
+                        for="condition"
+                        :class="secretMode ? 'text-rose-300' : 'text-neutral-600'"
+                        class="font-mono-tech block text-[11px] font-bold uppercase tracking-wider"
+                        x-text="secretMode ? 'ÉTAT (CODE DE VOTRE INTENTION)' : '03 / ÉTAT DE CONSERVATION'"
+                    >03 / ÉTAT DE CONSERVATION</label>
                     <select
                         id="condition"
                         name="condition"
-                        class="mt-1.5 block w-full rounded-xl border border-teal-900/20 bg-white px-4 py-2.5 text-sm text-teal-950 shadow-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        :class="secretMode
+                            ? 'rounded-xl border-rose-400/25 bg-[#0A0208] text-rose-100 focus:border-rose-400'
+                            : 'border-[#DFDDD4] bg-[#F6F5F0] text-[#111111] focus:border-[#111111]'"
+                        class="mt-2 block w-full border px-4 py-3 text-sm focus:outline-none"
                     >
                         <option value="">Sélectionner l'état</option>
                         @foreach ($conditions as $condition)
@@ -61,15 +105,19 @@
                         @endforeach
                     </select>
                     @error('condition')
-                        <p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>
+                        <p class="mt-1.5 text-xs font-semibold text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
             </div>
 
-            {{-- Prix & Ville (sur 2 colonnes sur écran moyen) --}}
             <div class="grid gap-6 sm:grid-cols-2">
                 <div>
-                    <label for="price" class="block text-sm font-bold text-teal-950">Prix (€)</label>
+                    <label
+                        for="price"
+                        :class="secretMode ? 'text-rose-300' : 'text-neutral-600'"
+                        class="font-mono-tech block text-[11px] font-bold uppercase tracking-wider"
+                        x-text="secretMode ? 'PRIX FAÇADE (€) / INDICE' : '04 / PRIX (€)'"
+                    >04 / PRIX (€)</label>
                     <input
                         id="price"
                         type="number"
@@ -78,51 +126,82 @@
                         name="price"
                         value="{{ old('price') }}"
                         placeholder="0.00"
-                        class="mt-1.5 block w-full rounded-xl border border-teal-900/20 bg-white px-4 py-2.5 text-sm text-teal-950 placeholder-teal-900/40 shadow-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        :class="secretMode
+                            ? 'rounded-xl border-rose-400/25 bg-[#0A0208] text-rose-100 placeholder:text-rose-300/35 focus:border-rose-400'
+                            : 'border-[#DFDDD4] bg-[#F6F5F0] text-[#111111] placeholder:text-neutral-400 focus:border-[#111111]'"
+                        class="mt-2 block w-full border px-4 py-3 text-sm focus:outline-none"
                     >
                     @error('price')
-                        <p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>
+                        <p class="mt-1.5 text-xs font-semibold text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div>
-                    <label for="city" class="block text-sm font-bold text-teal-950">Ville</label>
+                    <label
+                        for="city"
+                        :class="secretMode ? 'text-rose-300' : 'text-neutral-600'"
+                        class="font-mono-tech block text-[11px] font-bold uppercase tracking-wider"
+                        x-text="secretMode ? 'LIEU DE RENDEZ-VOUS' : '05 / VILLE'"
+                    >05 / VILLE</label>
                     <input
                         id="city"
                         type="text"
                         name="city"
                         value="{{ old('city') }}"
                         placeholder="Ex. Toulouse"
-                        class="mt-1.5 block w-full rounded-xl border border-teal-900/20 bg-white px-4 py-2.5 text-sm text-teal-950 placeholder-teal-900/40 shadow-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        :class="secretMode
+                            ? 'rounded-xl border-rose-400/25 bg-[#0A0208] text-rose-100 placeholder:text-rose-300/35 focus:border-rose-400'
+                            : 'border-[#DFDDD4] bg-[#F6F5F0] text-[#111111] placeholder:text-neutral-400 focus:border-[#111111]'"
+                        class="mt-2 block w-full border px-4 py-3 text-sm focus:outline-none"
                     >
                     @error('city')
-                        <p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>
+                        <p class="mt-1.5 text-xs font-semibold text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
             </div>
 
-            {{-- Description --}}
             <div>
-                <label for="description" class="block text-sm font-bold text-teal-950">Description</label>
+                <label
+                    for="description"
+                    :class="secretMode ? 'text-rose-300' : 'text-neutral-600'"
+                    class="font-mono-tech block text-[11px] font-bold uppercase tracking-wider"
+                    x-text="secretMode ? 'MESSAGE À DOUBLE SENS (DESCRIPTION)' : '06 / DESCRIPTION'"
+                >06 / DESCRIPTION</label>
                 <textarea
                     id="description"
                     name="description"
                     rows="5"
-                    placeholder="Décrivez votre article en détail (caractéristiques, dimensions, défauts éventuels...)"
-                    class="mt-1.5 block w-full rounded-xl border border-teal-900/20 bg-white px-4 py-2.5 text-sm text-teal-950 placeholder-teal-900/40 shadow-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    placeholder="Décrivez votre pièce en détail..."
+                    :class="secretMode
+                        ? 'rounded-xl border-rose-400/25 bg-[#0A0208] text-rose-100 placeholder:text-rose-300/35 focus:border-rose-400'
+                        : 'border-[#DFDDD4] bg-[#F6F5F0] text-[#111111] placeholder:text-neutral-400 focus:border-[#111111]'"
+                    class="mt-2 block w-full border px-4 py-3 text-sm focus:outline-none"
                 >{{ old('description') }}</textarea>
                 @error('description')
-                    <p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>
+                    <p class="mt-1.5 text-xs font-semibold text-red-500">{{ $message }}</p>
                 @enderror
             </div>
 
-            {{-- Boutons d'action --}}
-            <div class="flex items-center justify-end gap-3 border-t border-teal-900/10 pt-5">
-                <a href="{{ url('/annonces') }}" class="rounded-xl border border-teal-900/20 px-4 py-2.5 text-sm font-bold text-teal-900 transition hover:bg-teal-900/5">
+            <div
+                :class="secretMode ? 'border-rose-500/20' : 'border-[#DFDDD4]'"
+                class="flex items-center justify-end gap-3 border-t pt-5"
+            >
+                <a
+                    href="{{ url('/annonces') }}"
+                    :class="secretMode ? 'rounded-xl border-rose-400/30 text-rose-200' : 'border-[#DFDDD4] text-neutral-700 hover:border-[#111111]'"
+                    class="border px-5 py-3 text-xs font-bold uppercase tracking-wider transition"
+                >
                     Annuler
                 </a>
-                <button type="submit" class="rounded-xl bg-amber-400 px-5 py-2.5 text-sm font-bold text-teal-950 shadow-sm transition hover:bg-amber-300">
-                    Publier l'annonce
+                <button
+                    type="submit"
+                    :class="secretMode
+                        ? 'rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white'
+                        : 'bg-[#111111] text-[#F6F5F0] hover:bg-neutral-800'"
+                    class="px-7 py-3 text-xs font-bold uppercase tracking-[0.18em] transition"
+                    x-text="secretMode ? 'Diffuser le Signal' : 'Publier l\'Annonce'"
+                >
+                    Publier l'Annonce
                 </button>
             </div>
         </form>

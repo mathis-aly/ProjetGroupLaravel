@@ -1,30 +1,37 @@
 <section class="space-y-6">
     <header>
-        <h2 class="text-lg font-bold text-red-800">
+        <h2
+            class="font-serif-luxury text-2xl font-bold text-red-600"
+            x-text="secretMode ? 'Effacer toute trace & Quitter le Cercle' : 'Supprimer le compte'"
+        >
             Supprimer le compte
         </h2>
 
-        <p class="mt-1 text-sm text-teal-900/65">
-            Cette action est définitive et supprimera vos annonces ainsi que les données associées.
+        <p :class="secretMode ? 'text-rose-200/60' : 'text-neutral-500'" class="mt-1 text-xs">
+            Cette action est irréversible et supprimera vos publications ainsi que l'ensemble de vos données.
         </p>
     </header>
 
-    <x-danger-button
+    <button
+        type="button"
         x-data=""
         x-on:click.prevent="$dispatch('open-modal', 'confirm-user-deletion')"
-    >Supprimer mon compte</x-danger-button>
+        :class="secretMode ? 'rounded-xl border-red-500/40 bg-red-950/60 text-red-200' : 'border-red-600 bg-red-50 text-red-700 hover:bg-red-600 hover:text-white'"
+        class="border px-5 py-3 text-xs font-bold uppercase tracking-wider transition"
+        x-text="secretMode ? 'Brûler mon passeport Vesper' : 'Supprimer mon compte'"
+    >Supprimer mon compte</button>
 
     <x-modal name="confirm-user-deletion" :show="$errors->userDeletion->isNotEmpty()" focusable>
-        <form method="post" action="{{ route('profile.destroy') }}" class="p-6">
+        <form method="post" action="{{ route('profile.destroy') }}" class="bg-white p-6 text-[#111111]">
             @csrf
             @method('delete')
 
-            <h2 class="text-lg font-bold text-red-800">
-                Confirmer la suppression du compte
+            <h2 class="font-serif-luxury text-2xl font-bold text-red-600">
+                Confirmer la suppression définitive
             </h2>
 
-            <p class="mt-1 text-sm text-teal-900/65">
-                Saisissez votre mot de passe pour confirmer cette suppression définitive.
+            <p class="mt-1 text-xs text-neutral-600">
+                Saisissez votre mot de passe pour confirmer cette suppression.
             </p>
 
             <div class="mt-6">
@@ -33,21 +40,28 @@
                     id="password"
                     name="password"
                     type="password"
-                    class="mt-1 block w-full rounded-xl border border-teal-900/20 bg-white px-4 py-3 text-sm text-teal-950 shadow-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-amber-400 sm:w-3/4"
+                    class="mt-1 block w-full border border-[#DFDDD4] bg-[#F6F5F0] px-4 py-3 text-sm text-[#111111] focus:border-red-600 focus:outline-none sm:w-3/4"
                     placeholder="Mot de passe"
                 />
 
-                <x-input-error :messages="$errors->userDeletion->get('password')" class="mt-2 text-sm text-red-600" />
+                <x-input-error :messages="$errors->userDeletion->get('password')" class="mt-2 text-xs text-red-600" />
             </div>
 
-            <div class="mt-6 flex justify-end">
-                <x-secondary-button x-on:click="$dispatch('close')" class="border border-teal-900/20 bg-white text-teal-900 hover:bg-teal-900/5">
+            <div class="mt-6 flex justify-end gap-3">
+                <button
+                    type="button"
+                    x-on:click="$dispatch('close')"
+                    class="border border-[#DFDDD4] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-neutral-700"
+                >
                     Annuler
-                </x-secondary-button>
+                </button>
 
-                <x-danger-button class="ms-3">
+                <button
+                    type="submit"
+                    class="bg-red-600 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-red-700"
+                >
                     Confirmer la suppression
-                </x-danger-button>
+                </button>
             </div>
         </form>
     </x-modal>
